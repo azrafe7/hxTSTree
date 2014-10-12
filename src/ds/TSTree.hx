@@ -7,7 +7,12 @@ package ds;
 class TSTree<T>
 {
 
-	public var ANY:String = "?";
+	public var ANY_CHAR(default, set):String = "?";
+	private function set_ANY_CHAR(value:String):String 
+	{
+		if (value.length > 1) throw "`ANY_CHAR` must be a single character.";
+		return ANY_CHAR = value;
+	}
 	
 	public var examinedNodes:Int = 0;
 	
@@ -20,14 +25,14 @@ class TSTree<T>
 		
 	}
 	
-	public function insert(word:String, data:T)
+	public function insert(key:String, data:T)
 	{
-		root = _recurInsert(root, word, data);
+		root = _recurInsert(root, key, data);
 	}
 	
-	public function remove(word:String):Bool
+	public function remove(key:String):Bool
 	{
-		var node = _getNodeFor(root, word);
+		var node = _getNodeFor(root, key);
 		if (node != null) {
 			node.splitChar = node.splitChar.substr(0, 1);
 			return true;
@@ -35,9 +40,14 @@ class TSTree<T>
 		return false;
 	}
 	
-	public function contains(word:String):Bool
+	public function clear():Void 
 	{
-		return _getNodeFor(root, word) != null;
+		root = null;
+	}
+	
+	public function contains(key:String):Bool
+	{
+		return _getNodeFor(root, key) != null;
 	}
 	
 	public function prefixSearch(prefix:String, ?results:Array<String>):Array<String>
@@ -50,15 +60,15 @@ class TSTree<T>
 		return _match(root, pattern, results);
 	}
 	
-	public function nearest(word:String, distance:Int, ?results:Array<String>):Array<String>
+	public function nearest(key:String, distance:Int, ?results:Array<String>):Array<String>
 	{
-		if (distance > word.length) distance = word.length;
-		return _nearest(root, word, distance, results);
+		if (distance > key.length) distance = key.length;
+		return _nearest(root, key, distance, results);
 	}
 	
-	public function getDataFor(word:String):T 
+	public function getDataFor(key:String):T 
 	{
-		var node = _getNodeFor(root, word);
+		var node = _getNodeFor(root, key);
 		return node != null ? node.data : null;
 	}
 	
@@ -67,7 +77,7 @@ class TSTree<T>
 		if (node == null) return;
 		
 		traverse(node.loKid);
-		if (node.isWord) {
+		if (node.isKey) {
 			trace(node.splitChar.substr(2) + ":" + node.data);
 		} 
 		traverse(node.eqKid);
@@ -79,46 +89,46 @@ class TSTree<T>
 		return root == null;
 	}
 	
-	function _recurInsert(node:Node<T>, word:String, data:T, idx:Int = 0):Node<T>
+	function _recurInsert(node:Node<T>, key:String, data:T, idx:Int = 0):Node<T>
 	{
 		if (node == null) {
 			node = new Node();
-			node.splitChar = word.charAt(idx);
+			node.splitChar = key.charAt(idx);
 		}
 		
 		var splitChar = node.splitChar.charAt(0);
-		var char = word.charAt(idx);
-		var len = word.length;
+		var char = key.charAt(idx);
+		var len = key.length;
 		if (char < splitChar) {
-			node.loKid = _recurInsert(node.loKid, word, data, idx);
+			node.loKid = _recurInsert(node.loKid, key, data, idx);
 		} else if (char == splitChar) {
 			if (idx == len - 1) {
 				node.data = data;
-				node.isWord = true;
-				node.splitChar = char + "|" + word;
+				node.isKey = true;
+				node.splitChar = char + "|" + key;
 			} else {
-				node.eqKid = _recurInsert(node.eqKid, word, data, ++idx);
+				node.eqKid = _recurInsert(node.eqKid, key, data, ++idx);
 			}
 		} else {
-			node.hiKid = _recurInsert(node.hiKid, word, data, idx);
+			node.hiKid = _recurInsert(node.hiKid, key, data, idx);
 		}
 		
 		return node;
 	}
 	
-	function _getNodeFor(node:Node<T>, word:String):Node<T>
+	function _getNodeFor(node:Node<T>, key:String):Node<T>
 	{
 		var idx:Int = 0;
 		
 		while (node != null) {
 			var splitChar = node.splitChar.charAt(0);
-			var char = word.charAt(idx);
-			var len = word.length;
+			var char = key.charAt(idx);
+			var len = key.length;
 			
 			if (char < splitChar) {
 				node = node.loKid;
 			} else if (char == splitChar) {
-				if (idx == len - 1 && node.isWord) {
+				if (idx == len - 1 && node.isKey) {
 					return node;
 				}
 				node = node.eqKid;
@@ -144,10 +154,10 @@ class TSTree<T>
 				node = node.loKid;
 			} else if (char == splitChar) {
 				if (idx == len - 1) {
-					if (node.isWord) {
+					if (node.isKey) {
 						results.push(node.splitChar.substr(2));
 					}
-					_getAllWordsFrom(node.eqKid, results);
+					_getAllKeysFrom(node.eqKid, results);
 					break;
 				}
 				node = node.eqKid;
@@ -160,23 +170,23 @@ class TSTree<T>
 		return results;
 	}
 	
-	function _getAllWordsFrom(node:Node<T>, ?results:Array<String>):Array<String>
+	function _getAllKeysFrom(node:Node<T>, ?results:Array<String>):Array<String>
 	{
 		if (results == null) results = [];
 
 		if (node == null) return results;
 
 		if (node.loKid != null) {
-			_getAllWordsFrom(node.loKid, results);
+			_getAllKeysFrom(node.loKid, results);
 		}
-		if (node.isWord) {
+		if (node.isKey) {
 			results.push(node.splitChar.substr(2));
 		}
 		if (node.eqKid != null) {
-			_getAllWordsFrom(node.eqKid, results);
+			_getAllKeysFrom(node.eqKid, results);
 		}
 		if (node.hiKid != null) {
-			_getAllWordsFrom(node.hiKid, results);
+			_getAllKeysFrom(node.hiKid, results);
 		}
 		
 		return results;
@@ -192,7 +202,7 @@ class TSTree<T>
 		var splitChar = node.splitChar.charAt(0);
 		var char = pattern.charAt(idx);
 		var len = pattern.length;
-		var isAny = char == ANY;
+		var isAny = char == ANY_CHAR;
 		
 		if ((isAny || char < splitChar) && node.loKid != null) {
 			_match(node.loKid, pattern, results, idx);
@@ -200,7 +210,7 @@ class TSTree<T>
 		if (isAny || char == splitChar) {
 			if (idx < len - 1 && node.eqKid != null) {
 				_match(node.eqKid, pattern, results, idx + 1);
-			} else if (idx == len - 1 && node.isWord) {
+			} else if (idx == len - 1 && node.isKey) {
 				results.push(node.splitChar.substr(2));
 			}
 		}
@@ -211,7 +221,7 @@ class TSTree<T>
 		return results;
 	}
 	
-	function _nearest(node:Node<T>, word:String, distance:Int, ?results:Array<String>, idx:Int = 0):Array<String>
+	function _nearest(node:Node<T>, key:String, distance:Int, ?results:Array<String>, idx:Int = 0):Array<String>
 	{
 		if (results == null) results = [];
 		
@@ -219,26 +229,26 @@ class TSTree<T>
 		
 		examinedNodes++;
 		var splitChar = node.splitChar.charAt(0);
-		var char = word.charAt(idx);
-		var len = word.length;
+		var char = key.charAt(idx);
+		var len = key.length;
 		var examineEqKid = true;
 		
 		if ((distance > 0 || char < splitChar) && node.loKid != null) {
-			_nearest(node.loKid, word, distance, results, idx);
+			_nearest(node.loKid, key, distance, results, idx);
 		}
-		if (node.isWord) {
-			var nodeWord = node.splitChar.substr(2);
-			var lengthDiff = nodeWord.length - len;
+		if (node.isKey) {
+			var nodeKey = node.splitChar.substr(2);
+			var lengthDiff = nodeKey.length - len;
 			if (len - idx - 1 <= distance && lengthDiff == 0) {
-				results.push(nodeWord);
+				results.push(nodeKey);
 			}
 			examineEqKid = lengthDiff < 0;
 		}
 		if (node.eqKid != null && examineEqKid) {
-			_nearest(node.eqKid, word, char == splitChar ? distance : distance - 1, results, len > 0 ? idx + 1 : idx);
+			_nearest(node.eqKid, key, char == splitChar ? distance : distance - 1, results, len > 0 ? idx + 1 : idx);
 		}
 		if ((distance > 0 || char > splitChar) && node.hiKid != null) {
-			_nearest(node.hiKid, word, distance, results, idx);
+			_nearest(node.hiKid, key, distance, results, idx);
 		} 
 		
 		return results;
@@ -252,5 +262,5 @@ private class Node<T>
 	public var eqKid:Node<T> = null;
 	public var hiKid:Node<T> = null;
 	public var data:T;
-	public var isWord:Bool = false;
+	public var isKey:Bool = false;
 }
