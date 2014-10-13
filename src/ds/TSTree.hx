@@ -7,7 +7,7 @@ package ds;
 class TSTree<T>
 {
 
-	public var ANY_CHAR(default, set):String = "?";
+	public var ANY_CHAR(default, set):String = ".";
 	private function set_ANY_CHAR(value:String):String 
 	{
 		if (value.length > 1) throw "`ANY_CHAR` must be a single character.";
@@ -239,13 +239,14 @@ class TSTree<T>
 		if (node.isKey) {
 			var nodeKey = node.splitChar.substr(2);
 			var lengthDiff = nodeKey.length - len;
-			if (len - idx - 1 <= distance && lengthDiff == 0) {
+			var dist = distance - (char != splitChar ? 1 : 0);
+			if (len - idx - 1 <= dist && lengthDiff == 0) {
 				results.push(nodeKey);
 			}
 			examineEqKid = lengthDiff < 0;
 		}
 		if (node.eqKid != null && examineEqKid) {
-			_nearest(node.eqKid, key, char == splitChar ? distance : distance - 1, results, len > 0 ? idx + 1 : idx);
+			_nearest(node.eqKid, key, char == splitChar ? distance : distance - 1, results, idx + 1);
 		}
 		if ((distance > 0 || char > splitChar) && node.hiKid != null) {
 			_nearest(node.hiKid, key, distance, results, idx);

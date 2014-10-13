@@ -24,20 +24,18 @@ using StringTools;
  */
 class TSTreeDemo extends Sprite {
 	
-	var TEXT_COLOR:Int = 0xFFFFFFFF;
-	var TEXT_INPUT_BG:Int = 0xFF605050;
-	var TEXT_INPUT_WIDTH:Int = 140;
-	var TEXT_INPUT_BORDER:Int = 0xFF202020;
-	var TEXT_FONT:String = "_typewriter";
-	var TEXT_SIZE:Float = 12;
-	var TEXT_OUTLINE:GlowFilter = new GlowFilter(0xFF000000, 1, 2, 2, 6);
-	var MAX_RESULTS:Int = 15;
 	
-	var dict = ["in", "john", "gin", "inn", "pin", "longjohn", "apple", "fin", "pint", "inner", "an"];
+	var dict = ["in", "john", "gin", "inn", "pin", "longjohn", "apple", "fin", "pint", "inner", "an", "pit"];
+	//var dict = ["gin", "inn", "pin", "pit"];
+	
 	var fps:FPS;
 	var statsText:TextField;
-	var prefixInput:TextField;
-	var prefixResults:TextField;
+	
+	var prefixBox:TextBox;
+	var matchBox:TextBox;
+	var containsBox:TextBox;
+	var nearestBox:TextBox;
+
 	var tree:TSTree<String>;
 	var dictWords:Array<String>;
 	
@@ -67,12 +65,12 @@ class TSTreeDemo extends Sprite {
 		trace(tree.getDataFor(""));
 		trace("\n");
 		
-		trace(tree.match("??n"));
+		trace(tree.match("..n"));
 		trace(tree.match("in"));
-		trace(tree.match("in?"));
-		trace(tree.match("?in"));
-		trace(tree.match("?i?"));
-		trace(tree.match("?ohn"));
+		trace(tree.match("in."));
+		trace(tree.match(".in"));
+		trace(tree.match(".i."));
+		trace(tree.match(".ohn"));
 		trace("\n");
 		
 		trace(tree.prefixSearch(""));
@@ -92,26 +90,35 @@ class TSTreeDemo extends Sprite {
 		trace(tree.nearest("hn", 3));
 		trace("\n");
 		
-		var dictText = Assets.getText("dict.txt");
-		var dictWords:Array<String> = dictText.split("\r\n");
+		loadDictionary();
 		
-		prefixInput = getTextField("prefixSearch", 50, 50, null, true);
-		addChild(prefixInput);
-		prefixInput.addEventListener(Event.CHANGE, onPrefixChange);
-		prefixResults = getTextField("", prefixInput.x, prefixInput.y + 20);
-		addChild(prefixResults);
+		
+		containsBox = new TextBox("contains", 50, 50, 0, onContainsChange);
+		containsBox.text = "well";
+		onContainsChange();
+		addChild(containsBox);
+		
+		prefixBox = new TextBox("prefix", 200, 50, 15, onPrefixChange);
+		prefixBox.text = "war";
 		onPrefixChange();
+		addChild(prefixBox);
+		
+		matchBox = new TextBox("match", 350, 50, 15, onMatchChange);
+		matchBox.text = "w...d";
+		onMatchChange();
+		addChild(matchBox);
+		
+		nearestBox = new TextBox("nearest (dist = 2)", 500, 50, 15, onNearestChange);
+		nearestBox.text = "world";
+		onNearestChange();
+		addChild(nearestBox);
+		
+		
 		
 		fps = new FPS(0, 0, 0xFFFFFF);
 		fps.visible = false;
-		statsText = getTextField("prefixResults", 0, 0);
+		statsText = TextBox.getTextField("prefixResults", 0, 0);
 		addChild(statsText);
-		
-		tree.clear();
-		
-		for (word in dictWords) {
-			tree.insert(word.trim(), null);
-		}
 		
 		stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
 		stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
@@ -119,18 +126,40 @@ class TSTreeDemo extends Sprite {
 		//quit();
 	}
 	
+	public function loadDictionary():Void 
+	{
+		var dictText = Assets.getText("dict.txt");
+		var dictWords:Array<String> = dictText.split("\r\n");
+		
+		tree.clear();
+		
+		for (word in dictWords) {
+			tree.insert(word.trim(), null);
+		}
+	}
+	
+	public function onContainsChange(?e:Event):Void 
+	{
+		var result = tree.contains(containsBox.text);
+		containsBox.results = [Std.string(result)];
+	}
+	
 	public function onPrefixChange(?e:Event):Void 
 	{
-		var results = tree.prefixSearch(prefixInput.text);
-		prefixResults.text = '[${results.length} results]\n';
-		for (i in 0...results.length) {
-			if (i > MAX_RESULTS) {
-				prefixResults.appendText("...");
-				break;
-			} else {
-				prefixResults.appendText(results[i] + "\n");
-			}
-		}
+		var results = tree.prefixSearch(prefixBox.text);
+		prefixBox.results = results;
+	}
+	
+	public function onMatchChange(?e:Event):Void 
+	{
+		var results = tree.match(matchBox.text);
+		matchBox.results = results;
+	}
+	
+	public function onNearestChange(?e:Event):Void 
+	{
+		var results = tree.nearest(nearestBox.text, 2);
+		nearestBox.results = results;
 	}
 	
 	public function onEnterFrame(e:Event):Void 
@@ -155,34 +184,6 @@ class TSTreeDemo extends Sprite {
 	#end
 	}
 	
-	public function getTextField(text:String = "", x:Float, y:Float, ?size:Float, inputType:Bool = false):TextField
-	{
-		var tf:TextField = new TextField();
-		var fmt:TextFormat = new TextFormat(TEXT_FONT, null, TEXT_COLOR);
-		fmt.align = TextFormatAlign.LEFT;
-		fmt.size = size == null ? TEXT_SIZE : size;
-		if (inputType) {
-			tf.type = TextFieldType.INPUT;
-			tf.background = true;
-			tf.backgroundColor = TEXT_INPUT_BG;
-			tf.border = true;
-			tf.borderColor = TEXT_INPUT_BORDER;
-			tf.width = TEXT_INPUT_WIDTH;
-			tf.multiline = false;
-			tf.height = tf.textHeight + 4;
-		} else {
-			tf.autoSize = TextFieldAutoSize.LEFT;
-			tf.multiline = true;
-			tf.filters = [TEXT_OUTLINE];
-		}
-		tf.defaultTextFormat = fmt;
-		tf.selectable = inputType;
-		tf.x = x;
-		tf.y = y;
-		tf.text = text;
-		return tf;
-	}
-
 	public static inline function toFixed(num:Float, precision:Int):Float
 	{
 		var exp:Float = Math.pow(10, precision);
