@@ -16,7 +16,7 @@ import openfl.text.TextFormatAlign;
 class TextBox extends Sprite
 {
 	static var TEXT_COLOR:Int = 0xFFFFFFFF;
-	static var TEXT_INPUT_BG:Int = 0xFF605060;
+	static var TEXT_INPUT_BG:Int = 0xFF605050;
 	static var TEXT_INPUT_WIDTH:Int = 140;
 	static var TEXT_INPUT_BORDER:Int = 0xFF202020;
 	static var TEXT_FONT:String = "_typewriter";

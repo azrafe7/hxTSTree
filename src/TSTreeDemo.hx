@@ -24,10 +24,6 @@ using StringTools;
  */
 class TSTreeDemo extends Sprite {
 	
-	
-	var dict = ["in", "john", "gin", "inn", "pin", "longjohn", "apple", "fin", "pint", "inner", "an", "pit"];
-	//var dict = ["gin", "inn", "pin", "pit"];
-	
 	var fps:FPS;
 	var statsText:TextField;
 	
@@ -39,59 +35,16 @@ class TSTreeDemo extends Sprite {
 	var tree:TSTree<String>;
 	var dictWords:Array<String>;
 	
+	
 	public function new()
 	{
 		super();
 		
+		Tests.run();
+		
 		tree = new TSTree<String>();
 		
-		for (s in dict) tree.insert(s, s);
-		tree.insert("in", "overwritten");
-		
-		trace("all words");
-		tree.traverse(tree.root);
-		trace("\n");
-		
-		trace("contains");
-		trace(tree.contains("i"));
-		trace(tree.contains("inn"));
-		trace(tree.contains("ohn"));
-		trace(tree.contains(""));
-		trace("\n");
-		
-		trace(tree.getDataFor("i"));
-		trace(tree.getDataFor("inn"));
-		trace(tree.getDataFor("ohn"));
-		trace(tree.getDataFor(""));
-		trace("\n");
-		
-		trace(tree.match("..n"));
-		trace(tree.match("in"));
-		trace(tree.match("in."));
-		trace(tree.match(".in"));
-		trace(tree.match(".i."));
-		trace(tree.match(".ohn"));
-		trace("\n");
-		
-		trace(tree.prefixSearch(""));
-		trace(tree.prefixSearch("inn"));
-		trace(tree.prefixSearch("i"));
-		trace(tree.prefixSearch("p"));
-		trace(tree.prefixSearch("a"));
-		trace("\n");
-		
-		trace(tree.nearest("inn", 0));
-		trace(tree.nearest("in", 1));
-		trace(tree.nearest("in", 2));
-		trace(tree.nearest("min", 0));
-		trace(tree.nearest("min", 1));
-		trace(tree.nearest("min", 2));
-		trace(tree.nearest("mint", 2));
-		trace(tree.nearest("hn", 3));
-		trace("\n");
-		
-		loadDictionary();
-		
+		loadDictionary();		
 		
 		containsBox = new TextBox("contains", 50, 50, 0, onContainsChange);
 		containsBox.text = "well";
@@ -112,7 +65,6 @@ class TSTreeDemo extends Sprite {
 		nearestBox.text = "world";
 		onNearestChange();
 		addChild(nearestBox);
-		
 		
 		
 		fps = new FPS(0, 0, 0xFFFFFF);
@@ -175,7 +127,7 @@ class TSTreeDemo extends Sprite {
 		}
 	}
 	
-	public function quit():Void 
+	static public function quit():Void 
 	{
 	#if (flash || html5)
 		System.exit(1);
@@ -184,7 +136,7 @@ class TSTreeDemo extends Sprite {
 	#end
 	}
 	
-	public static inline function toFixed(num:Float, precision:Int):Float
+	static public inline function toFixed(num:Float, precision:Int):Float
 	{
 		var exp:Float = Math.pow(10, precision);
 		return Math.round(num * exp) / exp;
