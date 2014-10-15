@@ -13,6 +13,5 @@
 	
 	<haxelib name="openfl" />
 	
-	<assets path="assets/dict.txt" rename="dict.txt" type="text" embed="true" />
 	
 </project>

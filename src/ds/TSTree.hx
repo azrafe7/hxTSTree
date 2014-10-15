@@ -1,4 +1,5 @@
 package ds;
+import haxe.ds.ArraySort;
 
 /**
  * ...
@@ -25,9 +26,80 @@ class TSTree<T>
 		
 	}
 	
+	public function randomBulkInsert(keys:Array<String>, values:Array<T>):Void 
+	{
+		if (keys == null || keys.length <= 0) return;
+		if (values != null && keys.length != values.length) throw "Number of `keys` and number of `values` must match.";
+		var indices = [for (i in 0...keys.length) i];
+		
+		var currIdx = keys.length;
+		var tmp, rndIdx;
+		var tmpVal;
+		
+		// Knuth shuffle
+		while (currIdx > 0) {
+			rndIdx = Math.floor(Math.random() * currIdx);
+			currIdx--;
+			
+			tmp = indices[currIdx];
+			indices[currIdx] = indices[rndIdx];
+			indices[rndIdx] = tmp;
+		}
+		
+		for (i in 0...indices.length) {
+			var idx = indices[i];
+			insert(keys[idx], values[idx]);
+		}
+			
+/*		while (currIdx > 0) {
+			rndIdx = Math.floor(Math.random() * currIdx);
+			currIdx--;
+			
+			tmp = keys[currIdx];
+			tmpVal = values[currIdx];
+			keys[currIdx] = keys[rndIdx];
+			keys[rndIdx] = tmp;
+			values[currIdx] = values[rndIdx];
+			values[rndIdx] = tmpVal;
+		}
+		
+		for (i in 0...keys.length) {
+			insert(keys[i], values[i]);
+		}
+*/	}
+	
+	public function bulkInsert(keys:Array<String>, ?values:Array<T>, isSorted:Bool = false):Void 
+	{
+		if (keys == null || keys.length <= 0) return;
+		if (values != null && keys.length != values.length) throw "Number of `keys` and number of `values` must match.";
+		var indices = [for (i in 0...keys.length) i];
+		if (!isSorted) {
+			ArraySort.sort(indices, function (a:Int, b:Int):Int
+			{
+				var keyA:String = keys[a];
+				var keyB:String = keys[b];
+				return keyA > keyB ? 1 : keyA < keyB ? -1 : 0;
+			});
+		}
+		trace(indices);
+		trace(indices.map(function (i):String 
+			{
+				return keys[i];
+			})
+		);
+		var m = keys.length >> 1;
+		var stack = [indices[m]];
+		/*while (stack.length > 0) {
+			var idx = stack.pop();
+			insert(keys[idx], values != null ? values[idx] : null);
+			stack.push(idx - 1);
+			stack.push(idx + 1);
+		}*/
+	}
+	
 	public function insert(key:String, data:T)
 	{
-		root = _recurInsert(root, key, data);
+		_insert(key, data);
 	}
 	
 	public function remove(key:String):Bool
@@ -45,7 +117,7 @@ class TSTree<T>
 		root = null;
 	}
 	
-	public function contains(key:String):Bool
+	public function exactSearch(key:String):Bool
 	{
 		return _getNodeFor(root, key) != null;
 	}
@@ -92,13 +164,13 @@ class TSTree<T>
 	function _recurInsert(node:Node<T>, key:String, data:T, idx:Int = 0):Node<T>
 	{
 		if (node == null) {
-			node = new Node();
-			node.splitChar = key.charAt(idx);
+			node = new Node(key.charAt(idx));
 		}
 		
 		var splitChar = node.splitChar.charAt(0);
 		var char = key.charAt(idx);
 		var len = key.length;
+		
 		if (char < splitChar) {
 			node.loKid = _recurInsert(node.loKid, key, data, idx);
 		} else if (char == splitChar) {
@@ -114,6 +186,39 @@ class TSTree<T>
 		}
 		
 		return node;
+	}
+	
+	function _insert(key:String, data:T):Void
+	{
+		var idx = 0;
+		var node = root;
+		while (idx < key.length) {
+			if (root == null) {
+				root = node = new Node(key.charAt(idx));
+			}
+			
+			var splitChar = node.splitChar.charAt(0);
+			var char = key.charAt(idx);
+			var len = key.length;
+			
+			if (char < splitChar) {
+				if (node.loKid == null) node.loKid = new Node(char);
+				node = node.loKid;
+			} else if (char == splitChar) {
+				if (idx == len - 1) {
+					node.data = data;
+					node.isKey = true;
+					node.splitChar = char + "|" + key;
+				} else {
+					if (node.eqKid == null) node.eqKid = new Node(key.charAt(idx + 1));
+					node = node.eqKid;
+				}
+				idx++;
+			} else {
+				if (node.hiKid == null) node.hiKid = new Node(char);
+				node = node.hiKid;
+			}
+		}
 	}
 	
 	function _getNodeFor(node:Node<T>, key:String):Node<T>
@@ -264,4 +369,9 @@ private class Node<T>
 	public var hiKid:Node<T> = null;
 	public var data:T;
 	public var isKey:Bool = false;
+	
+	public function new(char:String):Void 
+	{
+		this.splitChar = char;
+	}
 }

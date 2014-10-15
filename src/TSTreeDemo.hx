@@ -1,5 +1,6 @@
 package;
 
+import haxe.Timer;
 import haxe.unit.TestCase;
 import openfl.Assets;
 import openfl.display.FPS;
@@ -26,10 +27,13 @@ class TSTreeDemo extends Sprite {
 	
 	var fps:FPS;
 	var statsText:TextField;
+	var perfText:TextField;
+	var dictInfo:TextField;
+	var time:Float = 0;
 	
 	var prefixBox:TextBox;
 	var matchBox:TextBox;
-	var containsBox:TextBox;
+	var exactBox:TextBox;
 	var nearestBox:TextBox;
 
 	var tree:TSTree<String>;
@@ -44,12 +48,18 @@ class TSTreeDemo extends Sprite {
 		
 		tree = new TSTree<String>();
 		
-		loadDictionary();		
+		dictInfo = TextBox.getTextField("", 200, 0);
+		addChild(dictInfo);
+		loadDictionary();
+		//quit();
 		
-		containsBox = new TextBox("contains", 50, 50, 0, onContainsChange);
-		containsBox.text = "well";
-		onContainsChange();
-		addChild(containsBox);
+		perfText = TextBox.getTextField("", 0, stage.stageHeight - 18);
+		addChild(perfText);
+		
+		exactBox = new TextBox("exact", 50, 50, 0, onExactChange);
+		exactBox.text = "well";
+		onExactChange();
+		addChild(exactBox);
 		
 		prefixBox = new TextBox("prefix", 200, 50, 15, onPrefixChange);
 		prefixBox.text = "war";
@@ -78,39 +88,55 @@ class TSTreeDemo extends Sprite {
 		//quit();
 	}
 	
+	
 	public function loadDictionary():Void 
 	{
-		var dictText = Assets.getText("dict.txt");
-		var dictWords:Array<String> = dictText.split("\r\n");
-		
 		tree.clear();
 		
-		for (word in dictWords) {
+		stopWatch();
+		var dictText = Macros.readFile("assets/dict_25k.txt");
+		var dictWords:Array<String> = dictText.split("\r\n");
+		
+		/*for (word in dictWords) {
 			tree.insert(word.trim(), null);
-		}
+		}*/
+		tree.randomBulkInsert(dictWords, dictWords);
+		
+		var delta = stopWatch();
+		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${delta}s';
+		//trace('Dictionary: ${dictWords.length} words loaded in ${delta}s');
+		//quit();
 	}
 	
-	public function onContainsChange(?e:Event):Void 
+	public function onExactChange(?e:Event):Void 
 	{
-		var result = tree.contains(containsBox.text);
-		containsBox.results = [Std.string(result)];
+		stopWatch();
+		var result = tree.exactSearch(exactBox.text);
+		perfText.text = 'last search executed in ${stopWatch()}s';
+		exactBox.results = [Std.string(result)];
 	}
 	
 	public function onPrefixChange(?e:Event):Void 
 	{
+		stopWatch();
 		var results = tree.prefixSearch(prefixBox.text);
+		perfText.text = 'last search executed in ${stopWatch()}s';
 		prefixBox.results = results;
 	}
 	
 	public function onMatchChange(?e:Event):Void 
 	{
+		stopWatch();
 		var results = tree.match(matchBox.text);
+		perfText.text = 'last search executed in ${stopWatch()}s';
 		matchBox.results = results;
 	}
 	
 	public function onNearestChange(?e:Event):Void 
 	{
+		stopWatch();
 		var results = tree.nearest(nearestBox.text, 2);
+		perfText.text = 'last search executed in ${stopWatch()}s';
 		nearestBox.results = results;
 	}
 	
@@ -125,6 +151,13 @@ class TSTreeDemo extends Sprite {
 		if (e.keyCode == 27) {
 			quit();
 		}
+	}
+	
+	public function stopWatch():Float 
+	{
+		var delta = Timer.stamp() - time;
+		time = Timer.stamp();
+		return toFixed(delta, 2);
 	}
 	
 	static public function quit():Void 
