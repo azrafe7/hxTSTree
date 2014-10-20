@@ -151,7 +151,7 @@ class TSTree<T>
 		
 		traverse(node.loKid);
 		if (node.isKey) {
-			trace(node.splitChar.substr(2) + ":" + node.data);
+			trace(node.splitChar.substr(1) + ":" + node.data);
 		} 
 		traverse(node.eqKid);
 		traverse(node.hiKid);
@@ -178,7 +178,7 @@ class TSTree<T>
 			if (idx == len - 1) {
 				node.data = data;
 				node.isKey = true;
-				node.splitChar = char + "|" + key;
+				node.splitChar = char + key;
 			} else {
 				node.eqKid = _recurInsert(node.eqKid, key, data, ++idx);
 			}
@@ -209,7 +209,7 @@ class TSTree<T>
 				if (idx == len - 1) {
 					node.data = data;
 					node.isKey = true;
-					node.splitChar = char + "|" + key;
+					node.splitChar = char + key;
 				} else {
 					if (node.eqKid == null) node.eqKid = new Node(key.charAt(idx + 1));
 					node = node.eqKid;
@@ -261,7 +261,7 @@ class TSTree<T>
 			} else if (char == splitChar) {
 				if (idx == len - 1) {
 					if (node.isKey) {
-						results.push(node.splitChar.substr(2));
+						results.push(node.splitChar.substr(1));
 					}
 					_getAllKeysFrom(node.eqKid, results);
 					break;
@@ -286,7 +286,7 @@ class TSTree<T>
 			_getAllKeysFrom(node.loKid, results);
 		}
 		if (node.isKey) {
-			results.push(node.splitChar.substr(2));
+			results.push(node.splitChar.substr(1));
 		}
 		if (node.eqKid != null) {
 			_getAllKeysFrom(node.eqKid, results);
@@ -317,7 +317,7 @@ class TSTree<T>
 			if (idx < len - 1 && node.eqKid != null) {
 				_match(node.eqKid, pattern, results, idx + 1);
 			} else if (idx == len - 1 && node.isKey) {
-				results.push(node.splitChar.substr(2));
+				results.push(node.splitChar.substr(1));
 			}
 		}
 		if ((isAny || char > splitChar) && node.hiKid != null) {
@@ -343,7 +343,7 @@ class TSTree<T>
 			_nearest(node.loKid, key, distance, results, idx);
 		}
 		if (node.isKey) {
-			var nodeKey = node.splitChar.substr(2);
+			var nodeKey = node.splitChar.substr(1);
 			var lengthDiff = nodeKey.length - len;
 			var dist = distance - (char != splitChar ? 1 : 0);
 			if (len - idx - 1 <= dist && lengthDiff == 0) {
