@@ -26,12 +26,12 @@ class TSTree<T>
 		
 	}
 	
-	public function randomBulkInsert(keys:Array<String>, values:Array<T>):Void 
+	public function randomBulkInsert(keys:Array<String>, ?values:Array<T>):Void 
 	{
 		if (keys == null || keys.length <= 0) return;
 		if (values != null && keys.length != values.length) throw "Number of `keys` and number of `values` must match.";
-		var indices = [for (i in 0...keys.length) i];
 		
+		var indices = [for (i in 0...keys.length) i];
 		var currIdx = keys.length;
 		var tmp, rndIdx;
 		var tmpVal;
@@ -48,32 +48,17 @@ class TSTree<T>
 		
 		for (i in 0...indices.length) {
 			var idx = indices[i];
-			insert(keys[idx], values[idx]);
+			insert(keys[idx], values != null ? values[idx] : null);
 		}
-			
-/*		while (currIdx > 0) {
-			rndIdx = Math.floor(Math.random() * currIdx);
-			currIdx--;
-			
-			tmp = keys[currIdx];
-			tmpVal = values[currIdx];
-			keys[currIdx] = keys[rndIdx];
-			keys[rndIdx] = tmp;
-			values[currIdx] = values[rndIdx];
-			values[rndIdx] = tmpVal;
-		}
-		
-		for (i in 0...keys.length) {
-			insert(keys[i], values[i]);
-		}
-*/	}
+	}
 	
 	public function bulkInsert(keys:Array<String>, ?values:Array<T>, isSorted:Bool = false):Void 
 	{
 		if (keys == null || keys.length <= 0) return;
 		if (values != null && keys.length != values.length) throw "Number of `keys` and number of `values` must match.";
+		
 		var indices = [for (i in 0...keys.length) i];
-		if (!isSorted) {
+		if (!isSorted) { // sort lexicographically in place
 			ArraySort.sort(indices, function (a:Int, b:Int):Int
 			{
 				var keyA:String = keys[a];
@@ -81,23 +66,39 @@ class TSTree<T>
 				return keyA > keyB ? 1 : keyA < keyB ? -1 : 0;
 			});
 		}
-		trace(indices);
-		trace(indices.map(function (i):String 
-			{
-				return keys[i];
-			})
-		);
-		var m = keys.length >> 1;
-		var stack = [indices[m]];
-		/*while (stack.length > 0) {
-			var idx = stack.pop();
-			insert(keys[idx], values != null ? values[idx] : null);
-			stack.push(idx - 1);
-			stack.push(idx + 1);
-		}*/
+		
+		// balanced insert
+		var len = keys.length;
+		var queue = new List();
+		queue.add(0);
+		queue.add(len);
+		
+		while (queue.length > 0) {
+			var start = queue.first();
+			queue.remove(start);
+			var end = queue.first();
+			queue.remove(end);
+			var mid = ((end - start) >> 1) + start;
+			
+			var rightRange = end - mid;
+			var leftRange = mid - start;
+			
+			insert(keys[indices[mid]], values != null ? values[indices[mid]] : null);
+			if (leftRange == 1) insert(keys[indices[start]], values != null ? values[indices[start]] : null);
+			if (rightRange == 1 && end < len) insert(keys[indices[end]], values != null ? values[indices[end]] : null);
+			
+			if (leftRange > 1) {
+				queue.add(start);
+				queue.add(mid - 1);
+			}
+			if (rightRange > 1) {
+				queue.add(mid + 1);
+				queue.add(end);
+			}
+		}
 	}
 	
-	public function insert(key:String, data:T)
+	public function insert(key:String, ?data:T)
 	{
 		_insert(key, data);
 	}
