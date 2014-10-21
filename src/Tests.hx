@@ -30,40 +30,8 @@ class Tests extends TestCase
 		for (s in dict) tree.insert(s, s);
 		
 		tree.clear();
-		tree.bulkInsert(dict, dict, false);
-        //var indices = [for (i in 0...10) String.fromCharCode("0".code + i)];
-        //rinsall(indices, indices.length, tree);
-        //insall(indices);
-		//TSTreeDemo.quit();
+		tree.bulkInsert(dict, dict);
     }
-    
-    static function rinsall(arr:Array<Dynamic>, n:Int, tree:TSTree<String>) {
-        var m:Int;
-        if (n < 1) return;
-        m = n >> 1;
-        trace(arr[m]);
-		tree.insert(arr[m], arr[m]);
-        rinsall(arr, m, tree);
-		rinsall(arr.slice(m + 1), n - m - 1, tree);
-    }
-
-	static function insall(arr:Array<Dynamic>):Void 
-	{
-		var len = arr.length;
-		var mid = len >> 1;
-		var queue = [mid];
-		while (queue.length > 0) {
-			var m = queue.pop();
-			if (m < 0 || m > len) continue;
-			trace(arr[m]);
-			if (m > 0 && m < mid) {
-				queue.push(mid + (m >> 1));
-				queue.push(mid - (m >> 1));
-			}
-			//base = m + 1;
-			//stack.push(n - m - 1); 
-		}
-	}
 	
 	public function testContains():Void 
 	{

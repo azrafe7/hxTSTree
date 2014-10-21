@@ -7,7 +7,7 @@ import haxe.ds.ArraySort;
  */
 class TSTree<T>
 {
-	inline static public var MAX_RESULTS:Int = 10;//0x7FFFFFFF;
+	inline static public var MAX_RESULTS:Int = 0x7FFFFFFF;
 	var maxResults:Int = MAX_RESULTS;
 	
 	public var ANY_CHAR(default, set):String = ".";

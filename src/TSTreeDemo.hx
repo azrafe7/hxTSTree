@@ -39,7 +39,7 @@ class TSTreeDemo extends Sprite {
 
 	var tree:TSTree<String>;
 	var dictWords:Array<String>;
-	
+	var distance:Int = 2;
 	
 	public function new()
 	{
@@ -72,7 +72,7 @@ class TSTreeDemo extends Sprite {
 		onMatchChange();
 		addChild(matchBox);
 		
-		nearestBox = new TextBox("nearest (dist = 2)", 500, 50, 15, onNearestChange);
+		nearestBox = new TextBox('nearest (dist = $distance)', 500, 50, 15, onNearestChange);
 		nearestBox.text = "world";
 		onNearestChange();
 		addChild(nearestBox);
@@ -95,7 +95,7 @@ class TSTreeDemo extends Sprite {
 		tree.clear();
 		
 		stopWatch();
-		var dictText = Macros.readFile("assets/dict_25k.txt");
+		var dictText = Macros.readFile("assets/dict_350k.txt");
 		//var dictText = haxe.Resource.getString("dictionary");
 		var dictWords:Array<String> = dictText.split("\r\n");
 		var loadTime = stopWatch();
@@ -103,7 +103,7 @@ class TSTreeDemo extends Sprite {
 			tree.insert(word, word);
 		}*/
 		//tree.randomBulkInsert(dictWords, dictWords);
-		tree.bulkInsert(dictWords, dictWords, true);
+		tree.bulkInsert(dictWords, dictWords, false);
 		
 		var insertTime = stopWatch();
 		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${loadTime}s, inserted in ${insertTime}s';
@@ -138,9 +138,18 @@ class TSTreeDemo extends Sprite {
 	public function onNearestChange(?e:Event):Void 
 	{
 		stopWatch();
-		var results = tree.nearest(nearestBox.text, 2);
+		var results = tree.nearest(nearestBox.text, distance);
 		perfText.text = 'last search executed in ${stopWatch()}s';
 		nearestBox.results = results;
+	}
+	
+	public function changeDistance(newDistance:Int):Void 
+	{
+		if (newDistance < 0) distance = 0;
+		else if (newDistance > 5) distance = 5;
+		else distance = newDistance;
+		nearestBox.label = 'nearest (dist = $distance)';
+		onNearestChange();
 	}
 	
 	public function onEnterFrame(e:Event):Void 
@@ -151,8 +160,12 @@ class TSTreeDemo extends Sprite {
 	
 	public function onKeyDown(e:KeyboardEvent):Void 
 	{
-		if (e.keyCode == 27) {
+		if (e.keyCode == 27) {	// ESC
 			quit();
+		} else if (e.keyCode == 38) {	// UP
+			changeDistance(distance + 1);
+		} else if (e.keyCode == 40) {	// DOWN
+			changeDistance(distance - 1);
 		}
 	}
 	

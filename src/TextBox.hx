@@ -30,12 +30,12 @@ class TextBox extends Sprite
 	var resultsTextField:TextField;
 	
 
-	public function new(text:String, x:Float, y:Float, maxResults:Int = 15, onChange:Dynamic->Void) 
+	public function new(labelText:String, x:Float, y:Float, maxResults:Int = 15, onChange:Dynamic->Void) 
 	{
 		super();
 		
 		this.maxResults = maxResults;
-		labelTextField = getTextField(text, x, y - TEXT_SIZE - 8, TEXT_SIZE);
+		labelTextField = getTextField(labelText, x, y - TEXT_SIZE - 8, TEXT_SIZE);
 		inputTextField = getTextField("", x, y, TEXT_SIZE, true);
 		resultsTextField = getTextField("", x, y + TEXT_SIZE + 8, TEXT_SIZE, false);
 		
@@ -50,6 +50,10 @@ class TextBox extends Sprite
 	public var text(get, set):String;
 	private function get_text():String { return inputTextField.text;	}
 	private function set_text(value:String):String { return inputTextField.text = value; }
+	
+	public var label(get, set):String;
+	private function get_label():String { return labelTextField.text;	}
+	private function set_label(value:String):String { return labelTextField.text = value; }
 	
 	public var results(default, set):Array<String>;
 	private function set_results(values:Array<String>):Array<String>
