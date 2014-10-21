@@ -58,7 +58,7 @@ class TSTree<T>
 		if (values != null && keys.length != values.length) throw "Number of `keys` and number of `values` must match.";
 		
 		var indices = [for (i in 0...keys.length) i];
-		if (!isSorted) { // sort lexicographically in place
+		if (!isSorted) { // sort lexicographically and store indices
 			ArraySort.sort(indices, function (a:Int, b:Int):Int
 			{
 				var keyA:String = keys[a];
@@ -118,7 +118,7 @@ class TSTree<T>
 		root = null;
 	}
 	
-	public function exactSearch(key:String):Bool
+	public function hasKey(key:String):Bool
 	{
 		return _getNodeFor(root, key) != null;
 	}
@@ -193,14 +193,14 @@ class TSTree<T>
 	{
 		var idx = 0;
 		var node = root;
-		while (idx < key.length) {
+		var len = key.length;
+		while (idx < len) {
 			if (root == null) {
 				root = node = new Node(key.charAt(idx));
 			}
 			
 			var splitChar = node.splitChar.charAt(0);
 			var char = key.charAt(idx);
-			var len = key.length;
 			
 			if (char < splitChar) {
 				if (node.loKid == null) node.loKid = new Node(char);
@@ -225,11 +225,11 @@ class TSTree<T>
 	function _getNodeFor(node:Node<T>, key:String):Node<T>
 	{
 		var idx:Int = 0;
+		var len = key.length;
 		
 		while (node != null) {
 			var splitChar = node.splitChar.charAt(0);
 			var char = key.charAt(idx);
-			var len = key.length;
 			
 			if (char < splitChar) {
 				node = node.loKid;
@@ -251,10 +251,10 @@ class TSTree<T>
 	{
 		if (results == null) results = [];
 
+		var len = prefix.length;
 		while (node != null) {
 			var splitChar = node.splitChar.charAt(0);
 			var char = prefix.charAt(idx);
-			var len = prefix.length;
 			
 			if (char < splitChar) {
 				node = node.loKid;

@@ -29,6 +29,8 @@ class Tests extends TestCase
 		tree = new TSTree<String>();		
 		for (s in dict) tree.insert(s, s);
 		
+		tree.clear();
+		tree.bulkInsert(dict, dict, false);
         //var indices = [for (i in 0...10) String.fromCharCode("0".code + i)];
         //rinsall(indices, indices.length, tree);
         //insall(indices);
@@ -65,10 +67,10 @@ class Tests extends TestCase
 	
 	public function testContains():Void 
 	{
-		assertFalse(tree.exactSearch(""));
-		assertTrue(tree.exactSearch("in"));
-		assertTrue(tree.exactSearch("inn"));
-		assertFalse(tree.exactSearch("john"));
+		assertFalse(tree.hasKey(""));
+		assertTrue(tree.hasKey("in"));
+		assertTrue(tree.hasKey("inn"));
+		assertFalse(tree.hasKey("john"));
 	}
 	
 	public function testGetData():Void 

@@ -1,5 +1,6 @@
 package;
 
+import haxe.Resource;
 import haxe.Timer;
 import haxe.unit.TestCase;
 import openfl.Assets;
@@ -56,7 +57,7 @@ class TSTreeDemo extends Sprite {
 		perfText = TextBox.getTextField("", 0, stage.stageHeight - 18);
 		addChild(perfText);
 		
-		exactBox = new TextBox("exact", 50, 50, 0, onExactChange);
+		exactBox = new TextBox("hasKey", 50, 50, 0, onExactChange);
 		exactBox.text = "well";
 		onExactChange();
 		addChild(exactBox);
@@ -95,15 +96,17 @@ class TSTreeDemo extends Sprite {
 		
 		stopWatch();
 		var dictText = Macros.readFile("assets/dict_25k.txt");
+		//var dictText = haxe.Resource.getString("dictionary");
 		var dictWords:Array<String> = dictText.split("\r\n");
-		
+		var loadTime = stopWatch();
 		/*for (word in dictWords) {
-			tree.insert(word.trim(), null);
+			tree.insert(word, word);
 		}*/
-		tree.randomBulkInsert(dictWords, dictWords);
+		//tree.randomBulkInsert(dictWords, dictWords);
+		tree.bulkInsert(dictWords, dictWords, true);
 		
-		var delta = stopWatch();
-		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${delta}s';
+		var insertTime = stopWatch();
+		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${loadTime}s, inserted in ${insertTime}s';
 		//trace('Dictionary: ${dictWords.length} words loaded in ${delta}s');
 		//quit();
 	}
@@ -111,7 +114,7 @@ class TSTreeDemo extends Sprite {
 	public function onExactChange(?e:Event):Void 
 	{
 		stopWatch();
-		var result = tree.exactSearch(exactBox.text);
+		var result = tree.hasKey(exactBox.text);
 		perfText.text = 'last search executed in ${stopWatch()}s';
 		exactBox.results = [Std.string(result)];
 	}
