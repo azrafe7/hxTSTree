@@ -7,7 +7,9 @@ import haxe.ds.ArraySort;
  */
 class TSTree<T>
 {
-
+	inline static public var MAX_RESULTS:Int = 10;//0x7FFFFFFF;
+	var maxResults:Int = MAX_RESULTS;
+	
 	public var ANY_CHAR(default, set):String = ".";
 	private function set_ANY_CHAR(value:String):String 
 	{
@@ -20,10 +22,9 @@ class TSTree<T>
 	
 	public var root:Node<T> = null;
 	
-	
 	public function new() 
 	{
-		
+
 	}
 	
 	public function randomBulkInsert(keys:Array<String>, ?values:Array<T>):Void 
@@ -123,18 +124,21 @@ class TSTree<T>
 		return _getNodeFor(root, key) != null;
 	}
 	
-	public function prefixSearch(prefix:String, ?results:Array<String>):Array<String>
+	public function prefixSearch(prefix:String, ?results:Array<String>, maxResults:Int = MAX_RESULTS):Array<String>
 	{
+		this.maxResults = maxResults;
 		return _prefixSearch(root, prefix, results);
 	}
 	
-	public function match(pattern:String, ?results:Array<String>):Array<String>
+	public function match(pattern:String, ?results:Array<String>, maxResults:Int = MAX_RESULTS):Array<String>
 	{
+		this.maxResults = maxResults;
 		return _match(root, pattern, results);
 	}
 	
-	public function nearest(key:String, distance:Int, ?results:Array<String>):Array<String>
+	public function nearest(key:String, distance:Int, ?results:Array<String>, maxResults:Int = MAX_RESULTS):Array<String>
 	{
+		this.maxResults = maxResults;
 		if (distance > key.length) distance = key.length;
 		return _nearest(root, key, distance, results);
 	}
@@ -252,7 +256,7 @@ class TSTree<T>
 		if (results == null) results = [];
 
 		var len = prefix.length;
-		while (node != null) {
+		while (node != null && maxResults > 0) {
 			var splitChar = node.splitChar.charAt(0);
 			var char = prefix.charAt(idx);
 			
@@ -260,8 +264,9 @@ class TSTree<T>
 				node = node.loKid;
 			} else if (char == splitChar) {
 				if (idx == len - 1) {
-					if (node.isKey) {
+					if (node.isKey && maxResults > 0) {
 						results.push(node.splitChar.substr(1));
+						maxResults--;
 					}
 					_getAllKeysFrom(node.eqKid, results);
 					break;
@@ -280,13 +285,14 @@ class TSTree<T>
 	{
 		if (results == null) results = [];
 
-		if (node == null) return results;
+		if (node == null || maxResults <= 0) return results;
 
 		if (node.loKid != null) {
 			_getAllKeysFrom(node.loKid, results);
 		}
 		if (node.isKey) {
-			results.push(node.splitChar.substr(1));
+			if (maxResults > 0) results.push(node.splitChar.substr(1));
+			maxResults--;
 		}
 		if (node.eqKid != null) {
 			_getAllKeysFrom(node.eqKid, results);
@@ -302,7 +308,7 @@ class TSTree<T>
 	{
 		if (results == null) results = [];
 		
-		if (node == null) return results;
+		if (node == null || maxResults <= 0) return results;
 		
 		examinedNodes++;
 		var splitChar = node.splitChar.charAt(0);
@@ -317,7 +323,8 @@ class TSTree<T>
 			if (idx < len - 1 && node.eqKid != null) {
 				_match(node.eqKid, pattern, results, idx + 1);
 			} else if (idx == len - 1 && node.isKey) {
-				results.push(node.splitChar.substr(1));
+				if (maxResults > 0) results.push(node.splitChar.substr(1));
+				maxResults--;
 			}
 		}
 		if ((isAny || char > splitChar) && node.hiKid != null) {
@@ -331,7 +338,7 @@ class TSTree<T>
 	{
 		if (results == null) results = [];
 		
-		if (node == null || distance < 0) return results;
+		if (node == null || distance < 0 || maxResults <= 0) return results;
 		
 		examinedNodes++;
 		var splitChar = node.splitChar.charAt(0);
@@ -347,7 +354,8 @@ class TSTree<T>
 			var lengthDiff = nodeKey.length - len;
 			var dist = distance - (char != splitChar ? 1 : 0);
 			if (len - idx - 1 <= dist && lengthDiff == 0) {
-				results.push(nodeKey);
+				if (maxResults > 0) results.push(nodeKey);
+				maxResults--;
 			}
 			examineEqKid = lengthDiff < 0;
 		}
