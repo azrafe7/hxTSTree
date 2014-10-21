@@ -111,10 +111,10 @@ class TSTreeDemo extends Sprite {
 		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${loadTime}s, inserted in ${insertTime}s (${tree.numNodes} nodes)';
 		
 	#if sys
-		/*stopWatch();
+		stopWatch();
 		tree.writeDotFile("tstree_bulkInsert.dot", "bulkInsert()", 200);
 		trace(stopWatch());
-		*/
+		
 	#end
 		//trace('Dictionary: ${dictWords.length} words loaded in ${delta}s');
 		//quit();

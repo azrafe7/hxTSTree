@@ -28,7 +28,17 @@ class TSTree<T>
 	
 	public var examinedNodes(default, null):Int = 0;
 	
-	public var root:Node<T> = null;
+	
+	var ROOT:Int = 0;
+	public var nodes:Array<Node<T>> = [];
+	
+	public var root(get, set):Node<T>;
+	function get_root():Node<T>	{
+		return nodes[ROOT];
+	}
+	function set_root(value:Node<T>):Node<T>	{
+		return nodes[ROOT] = value;
+	}
 	
 	public function new() 
 	{
@@ -220,10 +230,10 @@ class TSTree<T>
 	{
 		if (node == null) return;
 		
-		traverse(node.loKid, callback);
+		traverse(nodes[node.loKid], callback);
 		if (callback != null) callback(node);
-		traverse(node.eqKid, callback);
-		traverse(node.hiKid, callback);
+		traverse(nodes[node.eqKid], callback);
+		traverse(nodes[node.hiKid], callback);
 	}
 	
 	public function writeDotFile(path:String, ?label:String, maxNodes:Int = MAX_INT):Void 
@@ -246,45 +256,48 @@ class TSTree<T>
 			maxNodes--;
 			countNodes++;
 			
-			var curr = '"${idx}" ';
+			var curr = '"${node.idx}" ';
 			if (node.isKey) curr += '[label="${node.splitChar.charAt(0)}|${node.splitChar.substr(1)}", color=red]';
 			else curr += '[label="${node.splitChar}"]';
 			
 			// curr node
 			stringBuf.add('\t${curr}\n');
 			
-			var hasChildren = (node.loKid != null || node.eqKid != null || node.hiKid != null);
+			var loKid = nodes[node.loKid];
+			var eqKid = nodes[node.eqKid];
+			var hiKid = nodes[node.hiKid];
+			var hasChildren = (loKid != null || eqKid != null || hiKid != null);
 			
 			// loKid
 			if (hasChildren && maxNodes > 0) {
-				stringBuf.add('\t"${idx}" -> "${idx * 3 + 1}"\n');
-				if (node.loKid != null) {
-					indexQueue.add(idx * 3 + 1);
-					queue.add(node.loKid);
+				stringBuf.add('\t"${node.idx}" -> "${node.loKid}"\n');
+				if (loKid != null) {
+					indexQueue.add(node.loKid);
+					queue.add(loKid);
 				} else {
-					stringBuf.add('\t"${idx * 3 + 1}" [shape=point]\n');
+					stringBuf.add('\t"${node.loKid}" [shape=point]\n');
 				}
 			}
 			
 			// eqKid
 			if (hasChildren && maxNodes > 0) {
-				stringBuf.add('\t"${idx}" -> "${idx * 3 + 2}" [style=dotted]\n');
-				if (node.eqKid != null) {
-					indexQueue.add(idx * 3 + 2);
-					queue.add(node.eqKid);
+				stringBuf.add('\t"${node.idx}" -> "${node.eqKid}"\n');
+				if (eqKid != null) {
+					indexQueue.add(node.eqKid);
+					queue.add(eqKid);
 				} else {
-					stringBuf.add('\t"${idx * 3 + 2}" [shape=point]\n');
+					stringBuf.add('\t"${node.eqKid}" [shape=point]\n');
 				}
 			}
 			
 			// hiKid
 			if (hasChildren && maxNodes > 0) {
-				stringBuf.add('\t"${idx}" -> "${idx * 3 + 3}"\n');
-				if (node.hiKid != null) {
-					indexQueue.add(idx * 3 + 3);
-					queue.add(node.hiKid);
+				stringBuf.add('\t"${node.idx}" -> "${node.hiKid}"\n');
+				if (hiKid != null) {
+					indexQueue.add(node.hiKid);
+					queue.add(hiKid);
 				} else {
-					stringBuf.add('\t"${idx * 3 + 3}" [shape=point]\n');
+					stringBuf.add('\t"${node.hiKid}" [shape=point]\n');
 				}
 			}
 		}
@@ -304,38 +317,10 @@ class TSTree<T>
 		return root == null;
 	}
 	
-	function _recurInsert(node:Node<T>, key:String, data:T, idx:Int = 0):Node<T>
-	{
-		if (node == null) {
-			node = newNode(key.charAt(idx));
-		}
-		
-		var splitChar = node.splitChar.charAt(0);
-		var char = key.charAt(idx);
-		var len = key.length;
-		
-		if (char < splitChar) {
-			node.loKid = _recurInsert(node.loKid, key, data, idx);
-		} else if (char == splitChar) {
-			if (idx == len - 1) {
-				node.data = data;
-				if (!node.isKey) numKeys++;
-				node.isKey = true;
-				node.splitChar = char + key;
-			} else {
-				node.eqKid = _recurInsert(node.eqKid, key, data, ++idx);
-			}
-		} else {
-			node.hiKid = _recurInsert(node.hiKid, key, data, idx);
-		}
-		
-		return node;
-	}
-	
-	inline function newNode(char:String):Node<T>
+	inline function newNode(char:String, idx:Int):Node<T>
 	{
 		numNodes++;
-		return new Node(char);
+		return new Node(char, idx);
 	}
 	
 	function _insert(key:String, data:T):Void
@@ -345,29 +330,33 @@ class TSTree<T>
 		var len = key.length;
 		while (idx < len) {
 			if (root == null) {
-				root = node = newNode(key.charAt(idx));
+				root = node = newNode(key.charAt(idx), ROOT);
 			}
 			
 			var splitChar = node.splitChar.charAt(0);
 			var char = key.charAt(idx);
 			
 			if (char < splitChar) {
-				if (node.loKid == null) node.loKid = newNode(char);
-				node = node.loKid;
+				var loKidIdx = node.loKid;
+				if (nodes[loKidIdx] == null) nodes[loKidIdx] = newNode(char, loKidIdx);
+				node = nodes[loKidIdx];
 			} else if (char == splitChar) {
 				if (idx == len - 1) {
+					trace(numNodes);
 					node.data = data;
 					if (!node.isKey) numKeys++;
 					node.isKey = true;
 					node.splitChar = char + key;
 				} else {
-					if (node.eqKid == null) node.eqKid = newNode(key.charAt(idx + 1));
-					node = node.eqKid;
+					var eqKidIdx = node.eqKid;
+					if (nodes[eqKidIdx] == null) nodes[eqKidIdx] = newNode(key.charAt(idx + 1), eqKidIdx);
+					node = nodes[eqKidIdx];
 				}
 				idx++;
 			} else {
-				if (node.hiKid == null) node.hiKid = newNode(char);
-				node = node.hiKid;
+				var hiKidIdx = node.hiKid;
+				if (nodes[hiKidIdx] == null) nodes[hiKidIdx] = newNode(char, hiKidIdx);
+				node = nodes[hiKidIdx];
 			}
 		}
 	}
@@ -383,15 +372,15 @@ class TSTree<T>
 			var char = key.charAt(idx);
 			
 			if (char < splitChar) {
-				node = node.loKid;
+				node = nodes[node.loKid];
 			} else if (char == splitChar) {
 				if (idx == len - 1 && node.isKey) {
 					return node;
 				}
-				node = node.eqKid;
+				node = nodes[node.eqKid];
 				idx++;
 			} else {
-				node = node.hiKid;
+				node = nodes[node.hiKid];
 			}
 		}
 		
@@ -409,20 +398,20 @@ class TSTree<T>
 			var char = prefix.charAt(idx);
 			
 			if (char < splitChar) {
-				node = node.loKid;
+				node = nodes[node.loKid];
 			} else if (char == splitChar) {
 				if (idx == len - 1) {
 					if (node.isKey && maxResults > 0) {
 						results.push(node.splitChar.substr(1));
 						maxResults--;
 					}
-					_getAllKeysFrom(node.eqKid, results);
+					_getAllKeysFrom(nodes[node.eqKid], results);
 					break;
 				}
-				node = node.eqKid;
+				node = nodes[node.eqKid];
 				idx++;
 			} else {
-				node = node.hiKid;
+				node = nodes[node.hiKid];
 			}
 		}
 		
@@ -436,18 +425,18 @@ class TSTree<T>
 		if (node == null || maxResults <= 0) return results;
 
 		examinedNodes++;
-		if (node.loKid != null) {
-			_getAllKeysFrom(node.loKid, results);
+		if (nodes[node.loKid] != null) {
+			_getAllKeysFrom(nodes[node.loKid], results);
 		}
 		if (node.isKey) {
 			if (maxResults > 0) results.push(node.splitChar.substr(1));
 			maxResults--;
 		}
-		if (node.eqKid != null) {
-			_getAllKeysFrom(node.eqKid, results);
+		if (nodes[node.eqKid] != null) {
+			_getAllKeysFrom(nodes[node.eqKid], results);
 		}
-		if (node.hiKid != null) {
-			_getAllKeysFrom(node.hiKid, results);
+		if (nodes[node.hiKid] != null) {
+			_getAllKeysFrom(nodes[node.hiKid], results);
 		}
 		
 		return results;
@@ -465,19 +454,19 @@ class TSTree<T>
 		var len = pattern.length;
 		var isAny = char == ANY_CHAR;
 		
-		if ((isAny || char < splitChar) && node.loKid != null) {
-			_match(node.loKid, pattern, results, idx);
+		if ((isAny || char < splitChar) && nodes[node.loKid] != null) {
+			_match(nodes[node.loKid], pattern, results, idx);
 		} 
 		if (isAny || char == splitChar) {
-			if (idx < len - 1 && node.eqKid != null) {
-				_match(node.eqKid, pattern, results, idx + 1);
+			if (idx < len - 1 && nodes[node.eqKid] != null) {
+				_match(nodes[node.eqKid], pattern, results, idx + 1);
 			} else if (idx == len - 1 && node.isKey) {
 				if (maxResults > 0) results.push(node.splitChar.substr(1));
 				maxResults--;
 			}
 		}
-		if ((isAny || char > splitChar) && node.hiKid != null) {
-			_match(node.hiKid, pattern, results, idx);
+		if ((isAny || char > splitChar) && nodes[node.hiKid] != null) {
+			_match(nodes[node.hiKid], pattern, results, idx);
 		}
 		
 		return results;
@@ -495,8 +484,8 @@ class TSTree<T>
 		var len = key.length;
 		var examineEqKid = true;
 		
-		if ((distance > 0 || char < splitChar) && node.loKid != null) {
-			_nearest(node.loKid, key, distance, results, idx);
+		if ((distance > 0 || char < splitChar) && nodes[node.loKid] != null) {
+			_nearest(nodes[node.loKid], key, distance, results, idx);
 		}
 		if (node.isKey) {
 			var nodeKey = node.splitChar.substr(1);
@@ -508,11 +497,11 @@ class TSTree<T>
 			}
 			examineEqKid = lengthDiff < 0;
 		}
-		if (node.eqKid != null && examineEqKid) {
-			_nearest(node.eqKid, key, char == splitChar ? distance : distance - 1, results, idx + 1);
+		if (nodes[node.eqKid] != null && examineEqKid) {
+			_nearest(nodes[node.eqKid], key, char == splitChar ? distance : distance - 1, results, idx + 1);
 		}
-		if ((distance > 0 || char > splitChar) && node.hiKid != null) {
-			_nearest(node.hiKid, key, distance, results, idx);
+		if ((distance > 0 || char > splitChar) && nodes[node.hiKid] != null) {
+			_nearest(nodes[node.hiKid], key, distance, results, idx);
 		} 
 		
 		return results;
@@ -521,15 +510,29 @@ class TSTree<T>
 
 private class Node<T>
 {
+	public var idx:Int;
 	public var splitChar:String;
-	public var loKid:Node<T> = null;
-	public var eqKid:Node<T> = null;
-	public var hiKid:Node<T> = null;
 	public var data:T;
 	public var isKey:Bool = false;
 	
-	public function new(char:String):Void 
+	public var loKid(get, null):Int;
+	inline function get_loKid() {
+		return idx * 3 + 1;
+	}
+	
+	public var eqKid(get, null):Int;
+	inline function get_eqKid() {
+		return idx * 3 + 2;
+	}
+	
+	public var hiKid(get, null):Int;
+	inline function get_hiKid() {		
+		return idx * 3 + 3;
+	}
+	
+	public function new(char:String, idx:Int):Void 
 	{
+		this.idx = idx;
 		this.splitChar = char;
 	}
 }
