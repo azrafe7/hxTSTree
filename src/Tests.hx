@@ -33,6 +33,14 @@ class Tests extends TestCase
 		tree.bulkInsert(dict, dict);
     }
 	
+	public function testLength():Void 
+	{
+		assertEquals(dict.length, tree.numKeys);
+		tree.remove(dict[0]);
+		assertEquals(dict.length - 1, tree.numKeys);
+		tree.insert(dict[0], dict[0]);
+	}
+	
 	public function testContains():Void 
 	{
 		assertFalse(tree.hasKey(""));

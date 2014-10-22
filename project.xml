@@ -13,6 +13,6 @@
 	
 	<haxelib name="openfl" />
 	
-	<haxeflag name="-resource" value="assets/dict_25k.txt@dictionary" />
+	<!--haxeflag name="-resource" value="assets/dict_350k.txt@dictionary" /-->
 	
 </project>

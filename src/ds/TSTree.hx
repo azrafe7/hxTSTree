@@ -17,8 +17,11 @@ class TSTree<T>
 		return ANY_CHAR = value;
 	}
 	
-	public var examinedNodes:Int = 0;
+	public var numNodes(default, null):Int = 0;
 	
+	public var numKeys(default, null):Int = 0;
+	
+	public var examinedNodes(default, null):Int = 0;
 	
 	public var root:Node<T> = null;
 	
@@ -109,6 +112,9 @@ class TSTree<T>
 		var node = _getNodeFor(root, key);
 		if (node != null) {
 			node.splitChar = node.splitChar.substr(0, 1);
+			node.isKey = false;
+			node.data = null;
+			numKeys--;
 			return true;
 		}
 		return false;
@@ -117,27 +123,32 @@ class TSTree<T>
 	public function clear():Void 
 	{
 		root = null;
+		numNodes = numKeys = 0;
 	}
 	
 	public function hasKey(key:String):Bool
 	{
+		examinedNodes = 0;
 		return _getNodeFor(root, key) != null;
 	}
 	
 	public function prefixSearch(prefix:String, ?results:Array<String>, maxResults:Int = MAX_RESULTS):Array<String>
 	{
+		examinedNodes = 0;
 		this.maxResults = maxResults;
 		return _prefixSearch(root, prefix, results);
 	}
 	
 	public function match(pattern:String, ?results:Array<String>, maxResults:Int = MAX_RESULTS):Array<String>
 	{
+		examinedNodes = 0;
 		this.maxResults = maxResults;
 		return _match(root, pattern, results);
 	}
 	
 	public function nearest(key:String, distance:Int, ?results:Array<String>, maxResults:Int = MAX_RESULTS):Array<String>
 	{
+		examinedNodes = 0;
 		this.maxResults = maxResults;
 		if (distance > key.length) distance = key.length;
 		return _nearest(root, key, distance, results);
@@ -145,6 +156,7 @@ class TSTree<T>
 	
 	public function getDataFor(key:String):T 
 	{
+		examinedNodes = 0;
 		var node = _getNodeFor(root, key);
 		return node != null ? node.data : null;
 	}
@@ -169,7 +181,7 @@ class TSTree<T>
 	function _recurInsert(node:Node<T>, key:String, data:T, idx:Int = 0):Node<T>
 	{
 		if (node == null) {
-			node = new Node(key.charAt(idx));
+			node = newNode(key.charAt(idx));
 		}
 		
 		var splitChar = node.splitChar.charAt(0);
@@ -181,6 +193,7 @@ class TSTree<T>
 		} else if (char == splitChar) {
 			if (idx == len - 1) {
 				node.data = data;
+				if (!node.isKey) numKeys++;
 				node.isKey = true;
 				node.splitChar = char + key;
 			} else {
@@ -193,6 +206,12 @@ class TSTree<T>
 		return node;
 	}
 	
+	inline function newNode(char:String):Node<T>
+	{
+		numNodes++;
+		return new Node(char);
+	}
+	
 	function _insert(key:String, data:T):Void
 	{
 		var idx = 0;
@@ -200,27 +219,28 @@ class TSTree<T>
 		var len = key.length;
 		while (idx < len) {
 			if (root == null) {
-				root = node = new Node(key.charAt(idx));
+				root = node = newNode(key.charAt(idx));
 			}
 			
 			var splitChar = node.splitChar.charAt(0);
 			var char = key.charAt(idx);
 			
 			if (char < splitChar) {
-				if (node.loKid == null) node.loKid = new Node(char);
+				if (node.loKid == null) node.loKid = newNode(char);
 				node = node.loKid;
 			} else if (char == splitChar) {
 				if (idx == len - 1) {
 					node.data = data;
+					if (!node.isKey) numKeys++;
 					node.isKey = true;
 					node.splitChar = char + key;
 				} else {
-					if (node.eqKid == null) node.eqKid = new Node(key.charAt(idx + 1));
+					if (node.eqKid == null) node.eqKid = newNode(key.charAt(idx + 1));
 					node = node.eqKid;
 				}
 				idx++;
 			} else {
-				if (node.hiKid == null) node.hiKid = new Node(char);
+				if (node.hiKid == null) node.hiKid = newNode(char);
 				node = node.hiKid;
 			}
 		}
@@ -232,6 +252,7 @@ class TSTree<T>
 		var len = key.length;
 		
 		while (node != null) {
+			examinedNodes++;
 			var splitChar = node.splitChar.charAt(0);
 			var char = key.charAt(idx);
 			
@@ -257,6 +278,7 @@ class TSTree<T>
 
 		var len = prefix.length;
 		while (node != null && maxResults > 0) {
+			examinedNodes++;
 			var splitChar = node.splitChar.charAt(0);
 			var char = prefix.charAt(idx);
 			
@@ -287,6 +309,7 @@ class TSTree<T>
 
 		if (node == null || maxResults <= 0) return results;
 
+		examinedNodes++;
 		if (node.loKid != null) {
 			_getAllKeysFrom(node.loKid, results);
 		}

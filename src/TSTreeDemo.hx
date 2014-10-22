@@ -49,7 +49,7 @@ class TSTreeDemo extends Sprite {
 		
 		tree = new TSTree<String>();
 		
-		dictInfo = TextBox.getTextField("", 200, 0);
+		dictInfo = TextBox.getTextField("", 150, 0);
 		addChild(dictInfo);
 		loadDictionary();
 		//quit();
@@ -106,7 +106,7 @@ class TSTreeDemo extends Sprite {
 		tree.bulkInsert(dictWords, dictWords, false);
 		
 		var insertTime = stopWatch();
-		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${loadTime}s, inserted in ${insertTime}s';
+		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${loadTime}s, inserted in ${insertTime}s (${tree.numNodes} nodes)';
 		//trace('Dictionary: ${dictWords.length} words loaded in ${delta}s');
 		//quit();
 	}
@@ -115,7 +115,7 @@ class TSTreeDemo extends Sprite {
 	{
 		stopWatch();
 		var result = tree.hasKey(exactBox.text);
-		perfText.text = 'last search executed in ${stopWatch()}s';
+	perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
 		exactBox.results = [Std.string(result)];
 	}
 	
@@ -123,7 +123,7 @@ class TSTreeDemo extends Sprite {
 	{
 		stopWatch();
 		var results = tree.prefixSearch(prefixBox.text);
-		perfText.text = 'last search executed in ${stopWatch()}s';
+		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined})';
 		prefixBox.results = results;
 	}
 	
@@ -131,7 +131,7 @@ class TSTreeDemo extends Sprite {
 	{
 		stopWatch();
 		var results = tree.match(matchBox.text);
-		perfText.text = 'last search executed in ${stopWatch()}s';
+		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
 		matchBox.results = results;
 	}
 	
@@ -139,7 +139,7 @@ class TSTreeDemo extends Sprite {
 	{
 		stopWatch();
 		var results = tree.nearest(nearestBox.text, distance);
-		perfText.text = 'last search executed in ${stopWatch()}s';
+		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
 		nearestBox.results = results;
 	}
 	
