@@ -1,5 +1,10 @@
 package ds;
+
 import haxe.ds.ArraySort;
+import haxe.unit.TestCase;
+#if sys
+import sys.io.File;
+#end
 
 /**
  * ...
@@ -7,8 +12,8 @@ import haxe.ds.ArraySort;
  */
 class TSTree<T>
 {
-	inline static public var MAX_RESULTS:Int = 0x7FFFFFFF;
-	var maxResults:Int = MAX_RESULTS;
+	inline static public var MAX_INT:Int = 0x7FFFFFFF;
+	var maxResults:Int = MAX_INT;
 	
 	public var ANY_CHAR(default, set):String = ".";
 	private function set_ANY_CHAR(value:String):String 
@@ -54,6 +59,7 @@ class TSTree<T>
 			var idx = indices[i];
 			insert(keys[idx], values != null ? values[idx] : null);
 		}
+		indices = null;
 	}
 	
 	public function bulkInsert(keys:Array<String>, ?values:Array<T>, isSorted:Bool = false):Void 
@@ -100,6 +106,55 @@ class TSTree<T>
 				queue.add(end);
 			}
 		}
+		indices = null;
+	}
+	
+	public function bulkInsert2(keys:Array<String>, ?values:Array<T>, isSorted:Bool = false):Void 
+	{
+		if (keys == null || keys.length <= 0) return;
+		if (values != null && keys.length != values.length) throw "Number of `keys` and number of `values` must match.";
+		
+		var indices = [for (i in 0...keys.length) i];
+		if (!isSorted) { // sort lexicographically and store indices
+			ArraySort.sort(indices, function (a:Int, b:Int):Int
+			{
+				var keyA:String = keys[a];
+				var keyB:String = keys[b];
+				return keyA > keyB ? 1 : keyA < keyB ? -1 : 0;
+			});
+		}
+		
+		// balanced insert
+		var len = keys.length;
+		var queue = new List();
+		queue.add(0);
+		queue.add(len);
+		
+		var seq = [];
+		while (queue.length > 0) {
+			var start = queue.first();
+			queue.remove(start);
+			var end = queue.first();
+			queue.remove(end);
+			var mid = ((end - start) >> 1) + start;
+			
+			var rightRange = end - mid;
+			var leftRange = mid - start;
+			
+			seq.push(indices[mid]);
+			if (leftRange == 1) seq.push(indices[start]);
+			if (rightRange == 1 && end < len) seq.push(indices[end]);
+			
+			if (leftRange > 1) {
+				queue.add(start);
+				queue.add(mid - 1);
+			}
+			if (rightRange > 1) {
+				queue.add(mid + 1);
+				queue.add(end);
+			}
+		}
+		indices = null;
 	}
 	
 	public function insert(key:String, ?data:T)
@@ -132,21 +187,21 @@ class TSTree<T>
 		return _getNodeFor(root, key) != null;
 	}
 	
-	public function prefixSearch(prefix:String, ?results:Array<String>, maxResults:Int = MAX_RESULTS):Array<String>
+	public function prefixSearch(prefix:String, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
 	{
 		examinedNodes = 0;
 		this.maxResults = maxResults;
 		return _prefixSearch(root, prefix, results);
 	}
 	
-	public function match(pattern:String, ?results:Array<String>, maxResults:Int = MAX_RESULTS):Array<String>
+	public function match(pattern:String, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
 	{
 		examinedNodes = 0;
 		this.maxResults = maxResults;
 		return _match(root, pattern, results);
 	}
 	
-	public function nearest(key:String, distance:Int, ?results:Array<String>, maxResults:Int = MAX_RESULTS):Array<String>
+	public function nearest(key:String, distance:Int, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
 	{
 		examinedNodes = 0;
 		this.maxResults = maxResults;
@@ -161,18 +216,88 @@ class TSTree<T>
 		return node != null ? node.data : null;
 	}
 	
-	public function traverse(node:Node<T>, ?callback:Node<T>->Void):Void 
+	public function traverse(node:Node<T>, callback:Node<T>->Void = null):Void 
 	{
 		if (node == null) return;
 		
-		traverse(node.loKid);
-		if (node.isKey) {
-			trace(node.splitChar.substr(1) + ":" + node.data);
-		} 
-		traverse(node.eqKid);
-		traverse(node.hiKid);
+		traverse(node.loKid, callback);
+		if (callback != null) callback(node);
+		traverse(node.eqKid, callback);
+		traverse(node.hiKid, callback);
 	}
 	
+#if sys
+	public function writeDotFile(path:String, ?label:String, maxNodes:Int = MAX_INT):Void 
+	{
+		trace('Writing dot file in "$path"...');
+		var stringBuf = new StringBuf();
+		stringBuf.add('digraph TSTree {\n\tnode [shape=record, fontname=Courier]\n\tgraph [fontname=Courier, style=bold]\n');
+		
+		var countNodes = 0;
+		var indexQueue = new List();
+		indexQueue.add(0);
+		var queue = new List();
+		queue.add(root);
+		while (root != null && queue.length > 0 && maxNodes > 0) 
+		{
+			var idx = indexQueue.first();
+			indexQueue.remove(idx);
+			var node = queue.first();
+			queue.remove(node);
+			maxNodes--;
+			countNodes++;
+			
+			var curr = '"${idx}" ';
+			if (node.isKey) curr += '[label="${node.splitChar.charAt(0)}|${node.splitChar.substr(1)}", color=red]';
+			else curr += '[label="${node.splitChar}"]';
+			
+			// curr node
+			stringBuf.add('\t${curr}\n');
+			
+			var hasChildren = (node.loKid != null || node.eqKid != null || node.hiKid != null);
+			
+			// loKid
+			if (hasChildren && maxNodes > 0) {
+				stringBuf.add('\t"${idx}" -> "${idx * 3 + 1}"\n');
+				if (node.loKid != null) {
+					indexQueue.add(idx * 3 + 1);
+					queue.add(node.loKid);
+				} else {
+					stringBuf.add('\t"${idx * 3 + 1}" [shape=point]\n');
+				}
+			}
+			
+			// eqKid
+			if (hasChildren && maxNodes > 0) {
+				stringBuf.add('\t"${idx}" -> "${idx * 3 + 2}" [style=dotted]\n');
+				if (node.eqKid != null) {
+					indexQueue.add(idx * 3 + 2);
+					queue.add(node.eqKid);
+				} else {
+					stringBuf.add('\t"${idx * 3 + 2}" [shape=point]\n');
+				}
+			}
+			
+			// hiKid
+			if (hasChildren && maxNodes > 0) {
+				stringBuf.add('\t"${idx}" -> "${idx * 3 + 3}"\n');
+				if (node.hiKid != null) {
+					indexQueue.add(idx * 3 + 3);
+					queue.add(node.hiKid);
+				} else {
+					stringBuf.add('\t"${idx * 3 + 3}" [shape=point]\n');
+				}
+			}
+		}
+		if (label == null) label = '<<b>file:$path (nodes shown: $countNodes)</b>>';
+		stringBuf.add('\tlabelloc="t"\n\tlabeljust="l"\n\tlabel=<<b>$label</b>>\n');
+		stringBuf.add("}\n");
+		
+		sys.io.File.saveContent(path, stringBuf.toString());
+		trace('Done (${stringBuf.length} bytes written)');
+	}
+#end
+
 	public function isEmpty():Bool
 	{
 		return root == null;

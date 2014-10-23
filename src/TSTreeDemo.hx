@@ -1,8 +1,10 @@
 package;
 
 import haxe.Resource;
+import haxe.Serializer;
 import haxe.Timer;
 import haxe.unit.TestCase;
+import haxe.Unserializer;
 import openfl.Assets;
 import openfl.display.FPS;
 import openfl.display.Sprite;
@@ -95,7 +97,7 @@ class TSTreeDemo extends Sprite {
 		tree.clear();
 		
 		stopWatch();
-		var dictText = Macros.readFile("assets/dict_350k.txt");
+		var dictText:String = Macros.readFile("assets/dict_25k.txt");
 		//var dictText = haxe.Resource.getString("dictionary");
 		var dictWords:Array<String> = dictText.split("\r\n");
 		var loadTime = stopWatch();
@@ -107,6 +109,13 @@ class TSTreeDemo extends Sprite {
 		
 		var insertTime = stopWatch();
 		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${loadTime}s, inserted in ${insertTime}s (${tree.numNodes} nodes)';
+		
+	#if sys
+		/*stopWatch();
+		tree.writeDotFile("tstree_bulkInsert.dot", "bulkInsert()", 200);
+		trace(stopWatch());
+		*/
+	#end
 		//trace('Dictionary: ${dictWords.length} words loaded in ${delta}s');
 		//quit();
 	}
@@ -115,7 +124,7 @@ class TSTreeDemo extends Sprite {
 	{
 		stopWatch();
 		var result = tree.hasKey(exactBox.text);
-	perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
+		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
 		exactBox.results = [Std.string(result)];
 	}
 	
@@ -123,7 +132,7 @@ class TSTreeDemo extends Sprite {
 	{
 		stopWatch();
 		var results = tree.prefixSearch(prefixBox.text);
-		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined})';
+		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
 		prefixBox.results = results;
 	}
 	

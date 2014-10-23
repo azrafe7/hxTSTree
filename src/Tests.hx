@@ -5,8 +5,10 @@ import flash.Lib;
 import haxe.ds.ArraySort;
 import haxe.ds.GenericStack;
 import haxe.Log;
+import haxe.Serializer;
 import haxe.unit.TestCase;
 import haxe.unit.TestRunner;
+import haxe.Unserializer;
 
 
 using StringTools;

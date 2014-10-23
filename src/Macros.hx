@@ -11,8 +11,12 @@
 
 package ;
 
+import ds.TSTree;
 import haxe.macro.Context;
 import haxe.macro.Expr.ExprOf;
+import haxe.Serializer;
+
+using StringTools;
 
 /**
  * From https://github.com/jasononeil/compiletime/blob/master/src/CompileTime.hx
@@ -24,6 +28,10 @@ class Macros
     /** Reads a file at compile time, and inserts the contents into your code as a string.  The file path is resolved using `Context.resolvePath`, so it will search all your class paths */
     macro public static function readFile(path:String):ExprOf<String> {
         return toExpr(loadFileAsString(path));
+    }
+	
+    macro public static function readAndSplit(path:String):ExprOf<Array<String>> {
+        return toExpr(loadFileAsString(path).split("\r\n"));
     }
 	
 #if macro
