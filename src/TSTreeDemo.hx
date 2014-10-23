@@ -18,6 +18,9 @@ import openfl.text.TextFieldAutoSize;
 import openfl.text.TextFieldType;
 import openfl.text.TextFormat;
 import openfl.text.TextFormatAlign;
+#if sys
+import sys.io.File;
+#end
 
 using StringTools;
 
@@ -97,7 +100,7 @@ class TSTreeDemo extends Sprite {
 		tree.clear();
 		
 		stopWatch();
-		var dictText:String = Macros.readFile("assets/dict_25k.txt");
+		var dictText:String = Macros.readFile("assets/dict_350k.txt");
 		//var dictText = haxe.Resource.getString("dictionary");
 		var dictWords:Array<String> = dictText.split("\r\n");
 		var loadTime = stopWatch();
@@ -105,7 +108,7 @@ class TSTreeDemo extends Sprite {
 			tree.insert(word, word);
 		}*/
 		//tree.randomBulkInsert(dictWords, dictWords);
-		tree.bulkInsert(dictWords, dictWords, false);
+		tree.balancedBulkInsert(dictWords, dictWords, false);
 		
 		var insertTime = stopWatch();
 		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${loadTime}s, inserted in ${insertTime}s (${tree.numNodes} nodes)';
@@ -115,6 +118,17 @@ class TSTreeDemo extends Sprite {
 		tree.writeDotFile("tstree_bulkInsert.dot", "bulkInsert()", 200);
 		trace(stopWatch());
 		*/
+		
+		stopWatch();
+		var str = tree.serialize();
+		trace(stopWatch(), str.length);
+		sys.io.File.saveContent("serializedTree.txt", str);
+	
+		str = sys.io.File.getContent("serializedTree.txt");
+		stopWatch();
+		var uTree = TSTree.unserialize(str);
+		trace(stopWatch(), uTree.numKeys);
+		tree = uTree;
 	#end
 		//trace('Dictionary: ${dictWords.length} words loaded in ${delta}s');
 		//quit();
@@ -139,7 +153,7 @@ class TSTreeDemo extends Sprite {
 	public function onMatchChange(?e:Event):Void 
 	{
 		stopWatch();
-		var results = tree.match(matchBox.text);
+		var results = tree.patternSearch(matchBox.text);
 		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
 		matchBox.results = results;
 	}
@@ -147,7 +161,7 @@ class TSTreeDemo extends Sprite {
 	public function onNearestChange(?e:Event):Void 
 	{
 		stopWatch();
-		var results = tree.nearest(nearestBox.text, distance);
+		var results = tree.distanceSearch(nearestBox.text, distance);
 		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
 		nearestBox.results = results;
 	}

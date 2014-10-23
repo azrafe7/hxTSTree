@@ -32,7 +32,7 @@ class Tests extends TestCase
 		for (s in dict) tree.insert(s, s);
 		
 		tree.clear();
-		tree.bulkInsert(dict, dict);
+		tree.balancedBulkInsert(dict, dict);
     }
 	
 	public function testLength():Void 
@@ -70,20 +70,20 @@ class Tests extends TestCase
 	
 	public function testMatchSearch():Void 
 	{
-		assertTrue(tree.match("").length == 0);
-		assertEquals("[fin,gin,pin]", Std.string(tree.match(".in")));
-		assertEquals("[pin,pit]", Std.string(tree.match("p..")));
+		assertTrue(tree.patternSearch("").length == 0);
+		assertEquals("[fin,gin,pin]", Std.string(tree.patternSearch(".in")));
+		assertEquals("[pin,pit]", Std.string(tree.patternSearch("p..")));
 	}
 	
 	public function testNearestSearch():Void 
 	{
-		assertTrue(tree.nearest("", 3).length == 0);
-		assertEquals("[]", Std.string(tree.nearest("min", 0)));
-		assertEquals("[pin]", Std.string(tree.nearest("pin", 0)));
-		assertEquals("[fin,gin,pin]", Std.string(tree.nearest("min", 1)));
-		assertEquals("[fin,gin,inn,pin,pit]", Std.string(tree.nearest("min", 2)));
-		assertEquals("[an,in]", Std.string(tree.nearest("io", 5)));
-		assertEquals("[an,in]", Std.string(tree.nearest("_n", 1)));
+		assertTrue(tree.distanceSearch("", 3).length == 0);
+		assertEquals("[]", Std.string(tree.distanceSearch("min", 0)));
+		assertEquals("[pin]", Std.string(tree.distanceSearch("pin", 0)));
+		assertEquals("[fin,gin,pin]", Std.string(tree.distanceSearch("min", 1)));
+		assertEquals("[fin,gin,inn,pin,pit]", Std.string(tree.distanceSearch("min", 2)));
+		assertEquals("[an,in]", Std.string(tree.distanceSearch("io", 5)));
+		assertEquals("[an,in]", Std.string(tree.distanceSearch("_n", 1)));
 	}
 	
 	static public function run():Void 

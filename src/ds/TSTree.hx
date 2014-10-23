@@ -1,7 +1,8 @@
 package ds;
 
 import haxe.ds.ArraySort;
-import haxe.unit.TestCase;
+import haxe.Serializer;
+import haxe.Unserializer;
 #if sys
 import sys.io.File;
 #end
@@ -62,7 +63,7 @@ class TSTree<T>
 		indices = null;
 	}
 	
-	public function bulkInsert(keys:Array<String>, ?values:Array<T>, isSorted:Bool = false):Void 
+	public function balancedBulkInsert(keys:Array<String>, ?values:Array<T>, isSorted:Bool = false):Void 
 	{
 		if (keys == null || keys.length <= 0) return;
 		if (values != null && keys.length != values.length) throw "Number of `keys` and number of `values` must match.";
@@ -109,54 +110,16 @@ class TSTree<T>
 		indices = null;
 	}
 	
-	public function bulkInsert2(keys:Array<String>, ?values:Array<T>, isSorted:Bool = false):Void 
+	public function bulkInsert(keys:Array<String>, ?values:Array<T>):Void 
 	{
 		if (keys == null || keys.length <= 0) return;
 		if (values != null && keys.length != values.length) throw "Number of `keys` and number of `values` must match.";
 		
-		var indices = [for (i in 0...keys.length) i];
-		if (!isSorted) { // sort lexicographically and store indices
-			ArraySort.sort(indices, function (a:Int, b:Int):Int
-			{
-				var keyA:String = keys[a];
-				var keyB:String = keys[b];
-				return keyA > keyB ? 1 : keyA < keyB ? -1 : 0;
-			});
+		for (i in 0...keys.length) {
+			_insert(keys[i], values != null ? values[i] : null);
 		}
-		
-		// balanced insert
-		var len = keys.length;
-		var queue = new List();
-		queue.add(0);
-		queue.add(len);
-		
-		var seq = [];
-		while (queue.length > 0) {
-			var start = queue.first();
-			queue.remove(start);
-			var end = queue.first();
-			queue.remove(end);
-			var mid = ((end - start) >> 1) + start;
-			
-			var rightRange = end - mid;
-			var leftRange = mid - start;
-			
-			seq.push(indices[mid]);
-			if (leftRange == 1) seq.push(indices[start]);
-			if (rightRange == 1 && end < len) seq.push(indices[end]);
-			
-			if (leftRange > 1) {
-				queue.add(start);
-				queue.add(mid - 1);
-			}
-			if (rightRange > 1) {
-				queue.add(mid + 1);
-				queue.add(end);
-			}
-		}
-		indices = null;
 	}
-	
+
 	public function insert(key:String, ?data:T)
 	{
 		_insert(key, data);
@@ -164,7 +127,7 @@ class TSTree<T>
 	
 	public function remove(key:String):Bool
 	{
-		var node = _getNodeFor(root, key);
+		var node = getNodeFor(root, key);
 		if (node != null) {
 			node.splitChar = node.splitChar.substr(0, 1);
 			node.isKey = false;
@@ -184,7 +147,7 @@ class TSTree<T>
 	public function hasKey(key:String):Bool
 	{
 		examinedNodes = 0;
-		return _getNodeFor(root, key) != null;
+		return getNodeFor(root, key) != null;
 	}
 	
 	public function prefixSearch(prefix:String, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
@@ -194,41 +157,46 @@ class TSTree<T>
 		return _prefixSearch(root, prefix, results);
 	}
 	
-	public function match(pattern:String, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
+	public function patternSearch(pattern:String, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
 	{
 		examinedNodes = 0;
 		this.maxResults = maxResults;
-		return _match(root, pattern, results);
+		return _patternSearch(root, pattern, results);
 	}
 	
-	public function nearest(key:String, distance:Int, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
+	public function distanceSearch(key:String, distance:Int, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
 	{
 		examinedNodes = 0;
 		this.maxResults = maxResults;
 		if (distance > key.length) distance = key.length;
-		return _nearest(root, key, distance, results);
+		return _distanceSearch(root, key, distance, results);
 	}
 	
 	public function getDataFor(key:String):T 
 	{
 		examinedNodes = 0;
-		var node = _getNodeFor(root, key);
+		var node = getNodeFor(root, key);
 		return node != null ? node.data : null;
 	}
 	
-	public function traverse(node:Node<T>, callback:Node<T>->Void = null):Void 
+	public function getAll():Array<{key:String, data:T}>
 	{
-		if (node == null) return;
+		var results = [];
+		traverse(root, function (node:Node<T>):Void 
+		{
+			if (node.isKey) {
+				results.push({key:node.splitChar.substr(1), data:node.data});
+			}
+		});
 		
-		traverse(node.loKid, callback);
-		if (callback != null) callback(node);
-		traverse(node.eqKid, callback);
-		traverse(node.hiKid, callback);
+		return results;
 	}
 	
 	public function writeDotFile(path:String, ?label:String, maxNodes:Int = MAX_INT):Void 
 	{
-	#if sys
+	#if !sys
+		trace("Cannot write to file in non-system platform!");
+	#else
 		trace('Writing dot file in "$path"...');
 		var stringBuf = new StringBuf();
 		stringBuf.add('digraph TSTree {\n\tnode [shape=record, fontname=Courier]\n\tgraph [fontname=Courier, style=bold]\n');
@@ -253,14 +221,17 @@ class TSTree<T>
 			// curr node
 			stringBuf.add('\t${curr}\n');
 			
-			var hasChildren = (node.loKid != null || node.eqKid != null || node.hiKid != null);
+			var loKid = node.loKid;
+			var eqKid = node.eqKid;
+			var hiKid = node.hiKid;
+			var hasChildren = (loKid != null || eqKid != null || hiKid != null);
 			
 			// loKid
 			if (hasChildren && maxNodes > 0) {
 				stringBuf.add('\t"${idx}" -> "${idx * 3 + 1}"\n');
-				if (node.loKid != null) {
+				if (loKid != null) {
 					indexQueue.add(idx * 3 + 1);
-					queue.add(node.loKid);
+					queue.add(loKid);
 				} else {
 					stringBuf.add('\t"${idx * 3 + 1}" [shape=point]\n');
 				}
@@ -269,9 +240,9 @@ class TSTree<T>
 			// eqKid
 			if (hasChildren && maxNodes > 0) {
 				stringBuf.add('\t"${idx}" -> "${idx * 3 + 2}" [style=dotted]\n');
-				if (node.eqKid != null) {
+				if (eqKid != null) {
 					indexQueue.add(idx * 3 + 2);
-					queue.add(node.eqKid);
+					queue.add(eqKid);
 				} else {
 					stringBuf.add('\t"${idx * 3 + 2}" [shape=point]\n');
 				}
@@ -280,9 +251,9 @@ class TSTree<T>
 			// hiKid
 			if (hasChildren && maxNodes > 0) {
 				stringBuf.add('\t"${idx}" -> "${idx * 3 + 3}"\n');
-				if (node.hiKid != null) {
+				if (hiKid != null) {
 					indexQueue.add(idx * 3 + 3);
-					queue.add(node.hiKid);
+					queue.add(hiKid);
 				} else {
 					stringBuf.add('\t"${idx * 3 + 3}" [shape=point]\n');
 				}
@@ -294,11 +265,86 @@ class TSTree<T>
 		
 		sys.io.File.saveContent(path, stringBuf.toString());
 		trace('Done (${stringBuf.length} bytes written)');
-	#else
-		trace("Cannot write to file in non-system platform!");
 	#end
 	}
 
+	public function serialize():String
+	{
+		var serializer = new Serializer();
+		serializer.serialize(numNodes);
+		serializer.serialize(numKeys);
+		var keyDataPairs = getAll();
+		
+		var indices = [for (i in 0...keyDataPairs.length) i];
+		
+		// build balanced sequence
+		var len = keyDataPairs.length;
+		var queue = new List();
+		queue.add(0);
+		queue.add(len);
+		
+		var sequence = [];
+		while (queue.length > 0) {
+			var start = queue.first();
+			queue.remove(start);
+			var end = queue.first();
+			queue.remove(end);
+			var mid = ((end - start) >> 1) + start;
+			
+			var rightRange = end - mid;
+			var leftRange = mid - start;
+			
+			sequence.push(indices[mid]);
+			if (leftRange == 1) sequence.push(indices[start]);
+			if (rightRange == 1 && end < len) sequence.push(indices[end]);
+			
+			if (leftRange > 1) {
+				queue.add(start);
+				queue.add(mid - 1);
+			}
+			if (rightRange > 1) {
+				queue.add(mid + 1);
+				queue.add(end);
+			}
+		}
+		
+		// rearrange keyValuePairs in sequence order
+		for (i in 0...sequence.length) {
+			/*if (i < sequence.length - 1) {
+				var temp = keyDataPairs[sequence[i]];
+				keyDataPairs[sequence[i]] = keyDataPairs[sequence[i + 1]];
+				keyDataPairs[sequence[i + 1]] = temp;
+			}*/
+			serializer.serialize(keyDataPairs[sequence[i]]);
+		}
+		indices = null;
+		sequence = null;
+		
+		//serializer.serialize(keyDataPairs);
+		
+		return serializer.toString();
+	}
+
+	static public function unserialize<T>(buf:String):TSTree<T>
+	{
+		var unserializer = new Unserializer(buf);
+		var tree = new TSTree();
+		
+		var numNodes = unserializer.unserialize();
+		var numKeys = unserializer.unserialize();
+		/*var keyDataPairs:Array<{key:String, data:T}> = unserializer.unserialize();
+		for (i in 0...keyDataPairs.length) {
+			var pair = keyDataPairs[i];
+			tree._insert(pair.key, pair.data);
+		}*/
+		for (i in 0...numKeys) {
+			var pair = unserializer.unserialize();
+			tree._insert(pair.key, pair.data);
+		}
+		
+		return tree;
+	}
+	
 	public function isEmpty():Bool
 	{
 		return root == null;
@@ -307,7 +353,7 @@ class TSTree<T>
 	function _recurInsert(node:Node<T>, key:String, data:T, idx:Int = 0):Node<T>
 	{
 		if (node == null) {
-			node = newNode(key.charAt(idx));
+			node = createNode(key.charAt(idx));
 		}
 		
 		var splitChar = node.splitChar.charAt(0);
@@ -332,7 +378,17 @@ class TSTree<T>
 		return node;
 	}
 	
-	inline function newNode(char:String):Node<T>
+	function traverse(node:Node<T>, callback:Node<T>->Void):Void 
+	{
+		if (node == null) return;
+		
+		traverse(node.loKid, callback);
+		callback(node);
+		traverse(node.eqKid, callback);
+		traverse(node.hiKid, callback);
+	}
+	
+	inline function createNode(char:String):Node<T>
 	{
 		numNodes++;
 		return new Node(char);
@@ -345,14 +401,14 @@ class TSTree<T>
 		var len = key.length;
 		while (idx < len) {
 			if (root == null) {
-				root = node = newNode(key.charAt(idx));
+				root = node = createNode(key.charAt(idx));
 			}
 			
 			var splitChar = node.splitChar.charAt(0);
 			var char = key.charAt(idx);
 			
 			if (char < splitChar) {
-				if (node.loKid == null) node.loKid = newNode(char);
+				if (node.loKid == null) node.loKid = createNode(char);
 				node = node.loKid;
 			} else if (char == splitChar) {
 				if (idx == len - 1) {
@@ -361,18 +417,18 @@ class TSTree<T>
 					node.isKey = true;
 					node.splitChar = char + key;
 				} else {
-					if (node.eqKid == null) node.eqKid = newNode(key.charAt(idx + 1));
+					if (node.eqKid == null) node.eqKid = createNode(key.charAt(idx + 1));
 					node = node.eqKid;
 				}
 				idx++;
 			} else {
-				if (node.hiKid == null) node.hiKid = newNode(char);
+				if (node.hiKid == null) node.hiKid = createNode(char);
 				node = node.hiKid;
 			}
 		}
 	}
 	
-	function _getNodeFor(node:Node<T>, key:String):Node<T>
+	function getNodeFor(node:Node<T>, key:String):Node<T>
 	{
 		var idx:Int = 0;
 		var len = key.length;
@@ -416,7 +472,7 @@ class TSTree<T>
 						results.push(node.splitChar.substr(1));
 						maxResults--;
 					}
-					_getAllKeysFrom(node.eqKid, results);
+					getAllKeysFrom(node.eqKid, results);
 					break;
 				}
 				node = node.eqKid;
@@ -429,7 +485,7 @@ class TSTree<T>
 		return results;
 	}
 	
-	function _getAllKeysFrom(node:Node<T>, ?results:Array<String>):Array<String>
+	function getAllKeysFrom(node:Node<T>, ?results:Array<String>):Array<String>
 	{
 		if (results == null) results = [];
 
@@ -437,23 +493,23 @@ class TSTree<T>
 
 		examinedNodes++;
 		if (node.loKid != null) {
-			_getAllKeysFrom(node.loKid, results);
+			getAllKeysFrom(node.loKid, results);
 		}
 		if (node.isKey) {
 			if (maxResults > 0) results.push(node.splitChar.substr(1));
 			maxResults--;
 		}
 		if (node.eqKid != null) {
-			_getAllKeysFrom(node.eqKid, results);
+			getAllKeysFrom(node.eqKid, results);
 		}
 		if (node.hiKid != null) {
-			_getAllKeysFrom(node.hiKid, results);
+			getAllKeysFrom(node.hiKid, results);
 		}
 		
 		return results;
 	}
 	
-	function _match(node:Node<T>, pattern:String, ?results:Array<String>, idx:Int = 0):Array<String>
+	function _patternSearch(node:Node<T>, pattern:String, ?results:Array<String>, idx:Int = 0):Array<String>
 	{
 		if (results == null) results = [];
 		
@@ -466,24 +522,24 @@ class TSTree<T>
 		var isAny = char == ANY_CHAR;
 		
 		if ((isAny || char < splitChar) && node.loKid != null) {
-			_match(node.loKid, pattern, results, idx);
+			_patternSearch(node.loKid, pattern, results, idx);
 		} 
 		if (isAny || char == splitChar) {
 			if (idx < len - 1 && node.eqKid != null) {
-				_match(node.eqKid, pattern, results, idx + 1);
+				_patternSearch(node.eqKid, pattern, results, idx + 1);
 			} else if (idx == len - 1 && node.isKey) {
 				if (maxResults > 0) results.push(node.splitChar.substr(1));
 				maxResults--;
 			}
 		}
 		if ((isAny || char > splitChar) && node.hiKid != null) {
-			_match(node.hiKid, pattern, results, idx);
+			_patternSearch(node.hiKid, pattern, results, idx);
 		}
 		
 		return results;
 	}
 	
-	function _nearest(node:Node<T>, key:String, distance:Int, ?results:Array<String>, idx:Int = 0):Array<String>
+	function _distanceSearch(node:Node<T>, key:String, distance:Int, ?results:Array<String>, idx:Int = 0):Array<String>
 	{
 		if (results == null) results = [];
 		
@@ -496,7 +552,7 @@ class TSTree<T>
 		var examineEqKid = true;
 		
 		if ((distance > 0 || char < splitChar) && node.loKid != null) {
-			_nearest(node.loKid, key, distance, results, idx);
+			_distanceSearch(node.loKid, key, distance, results, idx);
 		}
 		if (node.isKey) {
 			var nodeKey = node.splitChar.substr(1);
@@ -509,10 +565,10 @@ class TSTree<T>
 			examineEqKid = lengthDiff < 0;
 		}
 		if (node.eqKid != null && examineEqKid) {
-			_nearest(node.eqKid, key, char == splitChar ? distance : distance - 1, results, idx + 1);
+			_distanceSearch(node.eqKid, key, char == splitChar ? distance : distance - 1, results, idx + 1);
 		}
 		if ((distance > 0 || char > splitChar) && node.hiKid != null) {
-			_nearest(node.hiKid, key, distance, results, idx);
+			_distanceSearch(node.hiKid, key, distance, results, idx);
 		} 
 		
 		return results;
