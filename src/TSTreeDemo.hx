@@ -97,7 +97,7 @@ class TSTreeDemo extends Sprite {
 		tree.clear();
 		
 		stopWatch();
-		var dictText:String = Macros.readFile("assets/dict_25k.txt");
+		var dictText:String = Macros.readFile("assets/dict_350k.txt");
 		//var dictText = haxe.Resource.getString("dictionary");
 		var dictWords:Array<String> = dictText.split("\r\n");
 		var loadTime = stopWatch();

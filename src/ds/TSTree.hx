@@ -30,7 +30,7 @@ class TSTree<T>
 	
 	
 	var ROOT:Int = 0;
-	public var nodes:Array<Node<T>> = [];
+	public var nodes:Map<Int, Node<T>> = new Map();
 	
 	public var root(get, set):Node<T>;
 	function get_root():Node<T>	{
@@ -342,7 +342,6 @@ class TSTree<T>
 				node = nodes[loKidIdx];
 			} else if (char == splitChar) {
 				if (idx == len - 1) {
-					trace(numNodes);
 					node.data = data;
 					if (!node.isKey) numKeys++;
 					node.isKey = true;
