@@ -226,9 +226,9 @@ class TSTree<T>
 		traverse(node.hiKid, callback);
 	}
 	
-#if sys
 	public function writeDotFile(path:String, ?label:String, maxNodes:Int = MAX_INT):Void 
 	{
+	#if sys
 		trace('Writing dot file in "$path"...');
 		var stringBuf = new StringBuf();
 		stringBuf.add('digraph TSTree {\n\tnode [shape=record, fontname=Courier]\n\tgraph [fontname=Courier, style=bold]\n');
@@ -238,8 +238,7 @@ class TSTree<T>
 		indexQueue.add(0);
 		var queue = new List();
 		queue.add(root);
-		while (root != null && queue.length > 0 && maxNodes > 0) 
-		{
+		while (root != null && queue.length > 0 && maxNodes > 0) {
 			var idx = indexQueue.first();
 			indexQueue.remove(idx);
 			var node = queue.first();
@@ -295,8 +294,10 @@ class TSTree<T>
 		
 		sys.io.File.saveContent(path, stringBuf.toString());
 		trace('Done (${stringBuf.length} bytes written)');
+	#else
+		trace("Cannot write to file in non-system platform!");
+	#end
 	}
-#end
 
 	public function isEmpty():Bool
 	{
