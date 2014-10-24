@@ -38,9 +38,9 @@ class TSTreeDemo extends Sprite {
 	var time:Float = 0;
 	
 	var prefixBox:TextBox;
-	var matchBox:TextBox;
-	var exactBox:TextBox;
-	var nearestBox:TextBox;
+	var patternBox:TextBox;
+	var hasKeyBox:TextBox;
+	var distanceBox:TextBox;
 
 	var tree:TSTree<String>;
 	var dictWords:Array<String>;
@@ -62,25 +62,25 @@ class TSTreeDemo extends Sprite {
 		perfText = TextBox.getTextField("", 0, stage.stageHeight - 18);
 		addChild(perfText);
 		
-		exactBox = new TextBox("hasKey", 50, 50, 0, onExactChange);
-		exactBox.text = "well";
-		onExactChange();
-		addChild(exactBox);
+		hasKeyBox = new TextBox("hasKey", 50, 50, 0, onHasKeyChange);
+		hasKeyBox.text = "well";
+		onHasKeyChange();
+		addChild(hasKeyBox);
 		
 		prefixBox = new TextBox("prefix", 200, 50, 15, onPrefixChange);
 		prefixBox.text = "war";
 		onPrefixChange();
 		addChild(prefixBox);
 		
-		matchBox = new TextBox("match", 350, 50, 15, onMatchChange);
-		matchBox.text = "w...d";
-		onMatchChange();
-		addChild(matchBox);
+		patternBox = new TextBox("pattern", 350, 50, 15, onPatternChange);
+		patternBox.text = "w...d";
+		onPatternChange();
+		addChild(patternBox);
 		
-		nearestBox = new TextBox('nearest (dist = $distance)', 500, 50, 15, onNearestChange);
-		nearestBox.text = "world";
-		onNearestChange();
-		addChild(nearestBox);
+		distanceBox = new TextBox('distance ($distance)', 500, 50, 15, onDistanceChange);
+		distanceBox.text = "world";
+		onDistanceChange();
+		addChild(distanceBox);
 		
 		
 		fps = new FPS(0, 0, 0xFFFFFF);
@@ -102,18 +102,26 @@ class TSTreeDemo extends Sprite {
 		stopWatch();
 		var dictText:String = Macros.readFile("assets/dict_350k.txt");
 		//var dictText = haxe.Resource.getString("dictionary");
-		var dictWords:Array<String> = dictText.split("\r\n");
+		dictWords = dictText.split("\r\n");
 		var loadTime = stopWatch();
 		/*for (word in dictWords) {
 			tree.insert(word, word);
 		}*/
 		//tree.randomBulkInsert(dictWords, dictWords);
-		tree.balancedBulkInsert(dictWords, dictWords, false);
+		//tree.balancedBulkInsert(dictWords, dictWords, false);
+		tree.balancedBulkInsert(dictWords, dictWords);
 		
 		var insertTime = stopWatch();
 		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${loadTime}s, inserted in ${insertTime}s (${tree.numNodes} nodes)';
 		
 	#if sys
+		generateDOTFiles(tree);
+		var sequence = tree.getBalancedIndices(dictWords);
+		var buf = new StringBuf();
+		for (i in sequence) {
+			buf.add(dictWords[i] + "\r\n");
+		}
+		sys.io.File.saveContent("dict.txt", buf.toString());
 		/*stopWatch();
 		tree.writeDotFile("tstree_bulkInsert.dot", "bulkInsert()", 200);
 		trace(stopWatch());
@@ -134,12 +142,33 @@ class TSTreeDemo extends Sprite {
 		//quit();
 	}
 	
-	public function onExactChange(?e:Event):Void 
+	public function generateDOTFiles<T>(t:TSTree<T>, maxNodes:Int = 200):Void 
+	{
+	#if sys
+		trace("Generating graphviz graphs...");
+		t.clear();
+		t.bulkInsert(dictWords, null);
+		t.writeDotFile("bulkInsert.dot", null, maxNodes);
+		
+		t.clear();
+		t.randomBulkInsert(dictWords, null);
+		t.writeDotFile("randomBulkInsert.dot", null, maxNodes);
+		
+		t.clear();
+		t.balancedBulkInsert(dictWords, null, false);
+		t.writeDotFile("balancedBulkInsert.dot", null, maxNodes);
+		
+		
+		trace("Done");
+	#end
+	}
+	
+	public function onHasKeyChange(?e:Event):Void 
 	{
 		stopWatch();
-		var result = tree.hasKey(exactBox.text);
+		var result = tree.hasKey(hasKeyBox.text);
 		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
-		exactBox.results = [Std.string(result)];
+		hasKeyBox.results = [Std.string(result)];
 	}
 	
 	public function onPrefixChange(?e:Event):Void 
@@ -150,29 +179,29 @@ class TSTreeDemo extends Sprite {
 		prefixBox.results = results;
 	}
 	
-	public function onMatchChange(?e:Event):Void 
+	public function onPatternChange(?e:Event):Void 
 	{
 		stopWatch();
-		var results = tree.patternSearch(matchBox.text);
+		var results = tree.patternSearch(patternBox.text);
 		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
-		matchBox.results = results;
+		patternBox.results = results;
 	}
 	
-	public function onNearestChange(?e:Event):Void 
+	public function onDistanceChange(?e:Event):Void 
 	{
 		stopWatch();
-		var results = tree.distanceSearch(nearestBox.text, distance);
+		var results = tree.distanceSearch(distanceBox.text, distance);
 		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
-		nearestBox.results = results;
+		distanceBox.results = results;
 	}
 	
-	public function changeDistance(newDistance:Int):Void 
+	public function changeHammingDistance(newDistance:Int):Void 
 	{
 		if (newDistance < 0) distance = 0;
 		else if (newDistance > 5) distance = 5;
 		else distance = newDistance;
-		nearestBox.label = 'nearest (dist = $distance)';
-		onNearestChange();
+		distanceBox.label = 'distance ($distance)';
+		onDistanceChange();
 	}
 	
 	public function onEnterFrame(e:Event):Void 
@@ -186,9 +215,9 @@ class TSTreeDemo extends Sprite {
 		if (e.keyCode == 27) {	// ESC
 			quit();
 		} else if (e.keyCode == 38) {	// UP
-			changeDistance(distance + 1);
+			changeHammingDistance(distance + 1);
 		} else if (e.keyCode == 40) {	// DOWN
-			changeDistance(distance - 1);
+			changeHammingDistance(distance - 1);
 		}
 	}
 	
