@@ -8,14 +8,25 @@ import sys.io.File;
 #end
 
 /**
- * ...
+ * Ternary Search Tree implementation (https://github.com/azrafe7/hxTSTree).
+ * 
+ * Based on Dr. Dobbs article (http://www.drdobbs.com/database/ternary-search-trees/184410528)
+ * 
+ * Features:
+ * 
+ *  - Multiple search types (exact, prefix, pattern, hamming distance)
+ *  - Multiple insert modes (sequential, random, balanced)
+ *  - Serialization/Unserialization
+ *  - Association of arbitrary data to keys (like a Map<String, T>)
+ *  - Returned keys (/data) are given in sorted order
+ * 
  * @author azrafe7
  */
 class TSTree<T>
 {
 	inline static public var MAX_INT:Int = 0x7FFFFFFF;
-	var maxResults:Int = MAX_INT;
 	
+	/** Char to use to indicate a "don't care" value in pattern search. */
 	public var ANY_CHAR(default, set):String = ".";
 	private function set_ANY_CHAR(value:String):String 
 	{
@@ -23,21 +34,26 @@ class TSTree<T>
 		return ANY_CHAR = value;
 	}
 	
+	/** Number of nodes in the tree. */
 	public var numNodes(default, null):Int = 0;
 	
+	/** Number of keys in the tree. */
 	public var numKeys(default, null):Int = 0;
 	
+	/** Number of nodes examined during the last operation. */
 	public var examinedNodes(default, null):Int = 0;
 	
 	
 	var root:Node<T> = null;
+	var maxResults:Int = MAX_INT;
 	
-	
+	/** Constructor. */
 	public function new() 
 	{
 
 	}
 	
+	/** Inserts key-value pairs in random order. */
 	public function randomBulkInsert(keys:Array<String>, ?values:Array<T>):Void 
 	{
 		if (keys == null || keys.length <= 0) return;
@@ -65,6 +81,11 @@ class TSTree<T>
 		indices = null;
 	}
 	
+	/** 
+	 * Inserts key-value pairs in balanced order.
+	 * 
+	 * @param isSorted	if `false` the keys will be sorted first (not in place).
+	 */
 	public function balancedBulkInsert(keys:Array<String>, ?values:Array<T>, isSorted:Bool = false):Void 
 	{
 		if (keys == null || keys.length <= 0) return;
@@ -88,6 +109,7 @@ class TSTree<T>
 		sequence = null;
 	}
 	
+	/** Inserts key-value pairs in sequential order. */
 	public function bulkInsert(keys:Array<String>, ?values:Array<T>):Void 
 	{
 		if (keys == null || keys.length <= 0) return;
@@ -98,6 +120,16 @@ class TSTree<T>
 		}
 	}
 
+	/** Rebalances the tree by extracting all nodes and reinserting them in balanced order. */
+	public function rebalance():Void 
+	{
+		var keys = getAllKeys();
+		var values = getAllData();
+		clear();
+		balancedBulkInsert(keys, values);
+	}
+	
+	/** Returns an array containing balanced indices for `sortedKeys`. */
 	public function getBalancedIndices(sortedKeys:Array<Dynamic>):Array<Int>
 	{
 		var len = sortedKeys.length;
@@ -136,11 +168,19 @@ class TSTree<T>
 		return sequence;
 	}
 
+	/** Inserts `key` into the tree and associates `data` to it. */
 	public function insert(key:String, ?data:T)
 	{
 		_insert(key, data);
 	}
 	
+	/**
+	 * Removes `key` from the tree.
+	 * 
+	 * (actually the corresponding nodes are not deleted - as this
+	 * would be a very expensive operation - so the key is simply
+	 * marked to not be used and the associated data is set to null)
+	 */
 	public function remove(key:String):Bool
 	{
 		var node = getNodeFor(root, key);
@@ -154,18 +194,26 @@ class TSTree<T>
 		return false;
 	}
 	
+	/** Removes all keys from the tree. */
 	public function clear():Void 
 	{
 		root = null;
 		numNodes = numKeys = 0;
 	}
 	
+	/** Checks if the given `key` is present in the tree. */
 	public function hasKey(key:String):Bool
 	{
 		examinedNodes = 0;
 		return getNodeFor(root, key) != null;
 	}
 	
+	/**
+	 * Searches the tree for keys that start with the given `prefix`.
+	 * 
+	 * @param	results		Matching keys will be appended to this array.
+	 * @param	maxResults	Max number of results allowed.
+	 */
 	public function prefixSearch(prefix:String, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
 	{
 		examinedNodes = 0;
@@ -173,6 +221,14 @@ class TSTree<T>
 		return _prefixSearch(root, prefix, results);
 	}
 	
+	/**
+	 * Searches the tree for keys matching the given `pattern`.
+	 * 
+	 * i.e. a pattern of ".a.a.a" will match "banana", "pajama", etc.
+	 * 
+	 * @param	results		Matching keys will be appended to this array.
+	 * @param	maxResults	Max number of results allowed.
+	 */
 	public function patternSearch(pattern:String, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
 	{
 		examinedNodes = 0;
@@ -180,14 +236,24 @@ class TSTree<T>
 		return _patternSearch(root, pattern, results);
 	}
 	
+	/**
+	 * Searches the tree for keys within Hamming `distance` from `key`.
+	 * 
+	 * @see http://en.wikipedia.org/wiki/Hamming_distance
+	 * 
+	 * @param	results		Matching keys will be appended to this array.
+	 * @param	maxResults	Max number of results allowed.
+	 */
 	public function distanceSearch(key:String, distance:Int, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
 	{
 		examinedNodes = 0;
 		this.maxResults = maxResults;
+		if (distance < 0) distance = 0;
 		if (distance > key.length) distance = key.length;
 		return _distanceSearch(root, key, distance, results);
 	}
 	
+	/** Returns the data associated with `key` (or null if `key` is not found). */
 	public function getDataFor(key:String):T 
 	{
 		examinedNodes = 0;
@@ -195,6 +261,7 @@ class TSTree<T>
 		return node != null ? node.data : null;
 	}
 	
+	/** Returns an array containing all the key-value pairs in the tree. */
 	public function getAll():Array<{key:String, data:T}>
 	{
 		var results = [];
@@ -208,6 +275,7 @@ class TSTree<T>
 		return results;
 	}
 	
+	/** Returns an array containing all the keys in the tree. */
 	public function getAllKeys():Array<String>
 	{
 		var results = [];
@@ -221,6 +289,7 @@ class TSTree<T>
 		return results;
 	}
 	
+	/** Returns an array containing all the data values in the tree. */
 	public function getAllData():Array<T>
 	{
 		var results = [];
@@ -234,6 +303,7 @@ class TSTree<T>
 		return results;
 	}
 	
+	/** Writes a DOT file representing the tree (for visualization with tools like GraphViz. */
 	public function writeDotFile(path:String, ?label:String, maxNodes:Int = MAX_INT):Void 
 	{
 	#if !sys
@@ -301,8 +371,8 @@ class TSTree<T>
 				}
 			}
 		}
-		if (label == null) label = '<<b>file:$path (nodes shown: $countNodes)</b>>';
-		stringBuf.add('\tlabelloc="t"\n\tlabeljust="l"\n\tlabel=<<b>$label</b>>\n');
+		if (label == null) label = '<b>$path ($countNodes nodes)</b>';
+		stringBuf.add('\tlabelloc="t"\n\tlabel=<<b>$label</b>>\n');
 		stringBuf.add("}\n");
 		
 		sys.io.File.saveContent(path, stringBuf.toString());
@@ -310,6 +380,7 @@ class TSTree<T>
 	#end
 	}
 
+	/** Serializes the whole tree (keys + data) to a string. */
 	public function serialize():String
 	{
 		var serializer = new Serializer();
@@ -328,6 +399,7 @@ class TSTree<T>
 		return serializer.toString();
 	}
 
+	/** Unserializes a string obtained with serialize() into a new TSTree. */
 	static public function unserialize<T>(buf:String):TSTree<T>
 	{
 		var unserializer = new Unserializer(buf);
@@ -344,9 +416,27 @@ class TSTree<T>
 		return tree;
 	}
 	
+	/** Checks if the tree is empty. */
 	public function isEmpty():Bool
 	{
 		return root == null;
+	}
+	
+	/** In-order tree traversal (callback will be called on every encountered node). */
+	function traverse(node:Node<T>, callback:Node<T>->Void):Void 
+	{
+		if (node == null) return;
+		
+		traverse(node.loKid, callback);
+		callback(node);
+		traverse(node.eqKid, callback);
+		traverse(node.hiKid, callback);
+	}
+	
+	inline function createNode(char:String):Node<T>
+	{
+		numNodes++;
+		return new Node(char);
 	}
 	
 	function _recurInsert(node:Node<T>, key:String, data:T, idx:Int = 0):Node<T>
@@ -377,24 +467,11 @@ class TSTree<T>
 		return node;
 	}
 	
-	function traverse(node:Node<T>, callback:Node<T>->Void):Void 
-	{
-		if (node == null) return;
-		
-		traverse(node.loKid, callback);
-		callback(node);
-		traverse(node.eqKid, callback);
-		traverse(node.hiKid, callback);
-	}
-	
-	inline function createNode(char:String):Node<T>
-	{
-		numNodes++;
-		return new Node(char);
-	}
-	
 	function _insert(key:String, data:T):Void
 	{
+	#if debug
+		if (key == null || key.length < 1) throw "Cannot insert empty or null string as key.";
+	#end	
 		var idx = 0;
 		var node = root;
 		var len = key.length;
