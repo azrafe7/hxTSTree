@@ -23,11 +23,11 @@ import sys.io.File;
  *
  * @author azrafe7
  */
-class TSTree<T>
+class TSTree
 {
 	inline static public var MAX_INT:Int = 0x7FFFFFFF;
 	
-	/** Char to use to indicate a "don't care" value in pattern search. */
+	/** Char used to indicate a "don't care" value in pattern search. */
 	public var ANY_CHAR(default, set):String = ".";
 	private function set_ANY_CHAR(value:String):String 
 	{
@@ -45,7 +45,7 @@ class TSTree<T>
 	public var examinedNodes(default, null):Int = 0;
 	
 	
-	var root:Node<T> = null;
+	var root:Node = null;
 	var maxResults:Int = MAX_INT;
 	
 	/** Constructor. */
@@ -55,29 +55,28 @@ class TSTree<T>
 	}
 	
 	/** Inserts key-value pairs in random order. */
-	public function randomBulkInsert(keys:Array<String>, ?values:Array<T>):Void 
+	public function randomBulkInsert(keys:Array<String>):Void 
 	{
 		if (keys == null || keys.length <= 0) return;
-		if (values != null && keys.length != values.length) throw "Number of `keys` and number of `values` must match.";
 		
 		var indices = [for (i in 0...keys.length) i];
 		var currIdx = keys.length;
-		var tmp, rndIdx;
-		var tmpVal;
+		var tempIdx, randomIdx;
+		var tempValue;
 		
 		// Knuth shuffle
 		while (currIdx > 0) {
-			rndIdx = Math.floor(Math.random() * currIdx);
+			randomIdx = Math.floor(Math.random() * currIdx);
 			currIdx--;
 			
-			tmp = indices[currIdx];
-			indices[currIdx] = indices[rndIdx];
-			indices[rndIdx] = tmp;
+			tempIdx = indices[currIdx];
+			indices[currIdx] = indices[randomIdx];
+			indices[randomIdx] = tempIdx;
 		}
 		
 		for (i in 0...indices.length) {
 			var idx = indices[i];
-			insert(keys[idx], values != null ? values[idx] : null);
+			insert(keys[idx]);
 		}
 	}
 	
@@ -86,10 +85,9 @@ class TSTree<T>
 	 * 
 	 * @param isSorted	if `false` the keys will be sorted first (not in place).
 	 */
-	public function balancedBulkInsert(keys:Array<String>, ?values:Array<T>, isSorted:Bool = false):Void 
+	public function balancedBulkInsert(keys:Array<String>, isSorted:Bool = false):Void 
 	{
 		if (keys == null || keys.length <= 0) return;
-		if (values != null && keys.length != values.length) throw "Number of `keys` and number of `values` must match.";
 		
 		var indices = [for (i in 0...keys.length) i];
 		if (!isSorted) { // sort lexicographically and store indices
@@ -103,18 +101,17 @@ class TSTree<T>
 		
 		var sequence = getBalancedIndices(indices.length);
 		for (i in sequence) {
-			insert(keys[indices[i]], values != null ? values[indices[i]] : null);
+			insert(keys[indices[i]]);
 		}
 	}
 	
 	/** Inserts key-value pairs in sequential order. */
-	public function bulkInsert(keys:Array<String>, ?values:Array<T>):Void 
+	public function bulkInsert(keys:Array<String>):Void 
 	{
 		if (keys == null || keys.length <= 0) return;
-		if (values != null && keys.length != values.length) throw "Number of `keys` and number of `values` must match.";
 		
 		for (i in 0...keys.length) {
-			_insert(keys[i], values != null ? values[i] : null);
+			_insert(keys[i]);
 		}
 	}
 
@@ -122,9 +119,8 @@ class TSTree<T>
 	public function rebalance():Void 
 	{
 		var keys = getAllKeys();
-		var values = getAllData();
 		clear();
-		balancedBulkInsert(keys, values);
+		balancedBulkInsert(keys);
 	}
 	
 	/** 
@@ -171,9 +167,9 @@ class TSTree<T>
 	}
 
 	/** Inserts `key` into the tree and associates `data` to it. */
-	public function insert(key:String, ?data:T)
+	public function insert(key:String)
 	{
-		_insert(key, data);
+		_insert(key);
 	}
 	
 	/**
@@ -189,7 +185,6 @@ class TSTree<T>
 		if (node != null) {
 			node.key = null;
 			node.isKey = false;
-			node.data = null;
 			numKeys--;
 			return true;
 		}
@@ -255,50 +250,14 @@ class TSTree<T>
 		return _distanceSearch(root, key, distance, results);
 	}
 	
-	/** Returns the data associated with `key` (or null if `key` is not found). */
-	public function getDataFor(key:String):T 
-	{
-		examinedNodes = 0;
-		var node = getNodeFor(root, key);
-		return node != null ? node.data : null;
-	}
-	
-	/** Returns an array containing all the key-value pairs in the tree. */
-	public function getAll():Array<{key:String, data:T}>
-	{
-		var results = [];
-		traverse(root, function (node:Node<T>):Void 
-		{
-			if (node.isKey) {
-				results.push({key:node.key, data:node.data});
-			}
-		});
-		
-		return results;
-	}
-	
 	/** Returns an array containing all the keys in the tree. */
 	public function getAllKeys():Array<String>
 	{
 		var results = [];
-		traverse(root, function (node:Node<T>):Void 
+		traverse(root, function (node:Node):Void 
 		{
 			if (node.isKey) {
 				results.push(node.key);
-			}
-		});
-		
-		return results;
-	}
-	
-	/** Returns an array containing all the data values in the tree. */
-	public function getAllData():Array<T>
-	{
-		var results = [];
-		traverse(root, function (node:Node<T>):Void 
-		{
-			if (node.isKey) {
-				results.push(node.data);
 			}
 		});
 		
@@ -423,13 +382,13 @@ class TSTree<T>
 		var serializer = new Serializer();
 		serializer.serialize(numNodes);
 		serializer.serialize(numKeys);
-		var keyDataPairs = getAll();
+		var keys = getAllKeys();
 		
-		var sequence = getBalancedIndices(keyDataPairs.length);
+		var sequence = getBalancedIndices(keys.length);
 		
 		// serialize keyValuePairs in sequence order
 		for (i in 0...sequence.length) {
-			serializer.serialize(keyDataPairs[sequence[i]]);
+			serializer.serialize(keys[sequence[i]]);
 		}
 		
 		return serializer.toString();
@@ -440,7 +399,7 @@ class TSTree<T>
 	 * 
 	 * Relies on haxe.Unserializer, so all its restrictions also apply.
 	 */
-	static public function unserialize<T>(buf:String):TSTree<T>
+	static public function unserialize(buf:String):TSTree
 	{
 		var unserializer = new Unserializer(buf);
 		var tree = new TSTree();
@@ -449,8 +408,8 @@ class TSTree<T>
 		var numKeys = unserializer.unserialize();
 		
 		for (i in 0...numKeys) {
-			var pair = unserializer.unserialize();
-			tree._insert(pair.key, pair.data);
+			var key = unserializer.unserialize();
+			tree._insert(key);
 		}
 		
 		return tree;
@@ -463,7 +422,7 @@ class TSTree<T>
 	}
 	
 	/** In-order tree traversal (callback will be called on every encountered node). */
-	function traverse(node:Node<T>, callback:Node<T>->Void):Void 
+	function traverse(node:Node, callback:Node->Void):Void 
 	{
 		if (node == null) return;
 		
@@ -473,13 +432,13 @@ class TSTree<T>
 		traverse(node.hiKid, callback);
 	}
 	
-	inline function createNode(char:String):Node<T>
+	inline function createNode(char:String):Node
 	{
 		numNodes++;
 		return new Node(char);
 	}
 	
-	function _recurInsert(node:Node<T>, key:String, data:T, idx:Int = 0):Node<T>
+	function _recurInsert(node:Node, key:String, idx:Int = 0):Node
 	{
 		if (node == null) {
 			node = createNode(key.charAt(idx));
@@ -490,24 +449,23 @@ class TSTree<T>
 		var len = key.length;
 		
 		if (char < splitChar) {
-			node.loKid = _recurInsert(node.loKid, key, data, idx);
+			node.loKid = _recurInsert(node.loKid, key, idx);
 		} else if (char == splitChar) {
 			if (idx == len - 1) {
-				node.data = data;
 				if (!node.isKey) numKeys++;
 				node.isKey = true;
 				node.key = key;
 			} else {
-				node.eqKid = _recurInsert(node.eqKid, key, data, ++idx);
+				node.eqKid = _recurInsert(node.eqKid, key, ++idx);
 			}
 		} else {
-			node.hiKid = _recurInsert(node.hiKid, key, data, idx);
+			node.hiKid = _recurInsert(node.hiKid, key, idx);
 		}
 		
 		return node;
 	}
 	
-	function _insert(key:String, data:T):Void
+	function _insert(key:String):Void
 	{
 	#if debug
 		if (key == null || key.length < 1) throw "Cannot insert empty or null string as key.";
@@ -528,7 +486,6 @@ class TSTree<T>
 				node = node.loKid;
 			} else if (char == splitChar) {
 				if (idx == len - 1) {
-					node.data = data;
 					if (!node.isKey) numKeys++;
 					node.isKey = true;
 					node.key = key;
@@ -544,7 +501,7 @@ class TSTree<T>
 		}
 	}
 	
-	function getNodeFor(node:Node<T>, key:String):Node<T>
+	function getNodeFor(node:Node, key:String):Node
 	{
 		var idx:Int = 0;
 		var len = key.length;
@@ -570,7 +527,7 @@ class TSTree<T>
 		return null;
 	}
 	
-	function _prefixSearch(node:Node<T>, prefix:String, ?results:Array<String>, idx:Int = 0):Array<String>
+	function _prefixSearch(node:Node, prefix:String, ?results:Array<String>, idx:Int = 0):Array<String>
 	{
 		if (results == null) results = [];
 
@@ -601,7 +558,7 @@ class TSTree<T>
 		return results;
 	}
 	
-	function getAllKeysFrom(node:Node<T>, ?results:Array<String>):Array<String>
+	function getAllKeysFrom(node:Node, ?results:Array<String>):Array<String>
 	{
 		if (results == null) results = [];
 
@@ -625,7 +582,7 @@ class TSTree<T>
 		return results;
 	}
 	
-	function _patternSearch(node:Node<T>, pattern:String, ?results:Array<String>, idx:Int = 0):Array<String>
+	function _patternSearch(node:Node, pattern:String, ?results:Array<String>, idx:Int = 0):Array<String>
 	{
 		if (results == null) results = [];
 		
@@ -655,7 +612,7 @@ class TSTree<T>
 		return results;
 	}
 	
-	function _distanceSearch(node:Node<T>, key:String, distance:Int, ?results:Array<String>, idx:Int = 0):Array<String>
+	function _distanceSearch(node:Node, key:String, distance:Int, ?results:Array<String>, idx:Int = 0):Array<String>
 	{
 		if (results == null) results = [];
 		
@@ -691,13 +648,12 @@ class TSTree<T>
 	}
 }
 
-private class Node<T>
+private class Node
 {
 	public var splitChar:String;
-	public var loKid:Node<T> = null;
-	public var eqKid:Node<T> = null;
-	public var hiKid:Node<T> = null;
-	public var data:T;
+	public var loKid:Node = null;
+	public var eqKid:Node = null;
+	public var hiKid:Node = null;
 	public var key:String;
 	public var isKey:Bool = false;
 	

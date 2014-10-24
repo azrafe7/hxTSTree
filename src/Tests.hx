@@ -21,18 +21,18 @@ class Tests extends TestCase
 {
 
 	var dict = ["in", "John", "gin", "inn", "pin", "longjohn", "apple", "fin", "pint", "inner", "an", "pit"];
-	var tree:TSTree<String>;
+	var tree:TSTree;
 	
 	
 	public function new()
 	{
 		super();
 		
-		tree = new TSTree<String>();		
-		for (s in dict) tree.insert(s, s);
+		tree = new TSTree();		
+		for (s in dict) tree.insert(s);
 		
 		tree.clear();
-		tree.balancedBulkInsert(dict, dict);
+		tree.balancedBulkInsert(dict);
     }
 	
 	public function testLength():Void 
@@ -40,9 +40,8 @@ class Tests extends TestCase
 		assertEquals(dict.length, tree.numKeys);
 		tree.remove(dict[0]);
 		assertEquals(dict.length - 1, tree.numKeys);
-		tree.insert(dict[0], dict[0]);
-		assertEquals(tree.getAll().length, tree.getAllData().length);
-		assertEquals(tree.getAllKeys().length, tree.getAllData().length);
+		tree.insert(dict[0]);
+		assertEquals(tree.getAllKeys().length, dict.length);
 	}
 	
 	public function testHasKey():Void 
@@ -51,16 +50,6 @@ class Tests extends TestCase
 		assertTrue(tree.hasKey("in"));
 		assertTrue(tree.hasKey("inn"));
 		assertFalse(tree.hasKey("john"));
-	}
-	
-	public function testGetData():Void 
-	{
-		assertTrue(tree.getDataFor("John") == "John");
-		assertTrue(tree.getDataFor("") == null);
-		assertTrue(tree.getDataFor("pit") == "pit");
-		assertTrue(tree.getDataFor("in") == "in");
-		tree.insert("in", "overwritten");
-		assertTrue(tree.getDataFor("in") == "overwritten");
 	}
 	
 	public function testPrefixSearch():Void 

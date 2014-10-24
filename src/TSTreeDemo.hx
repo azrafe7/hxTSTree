@@ -42,7 +42,7 @@ class TSTreeDemo extends Sprite {
 	var hasKeyBox:TextBox;
 	var distanceBox:TextBox;
 
-	var tree:TSTree<String>;
+	var tree:TSTree;
 	var dictWords:Array<String>;
 	var distance:Int = 2;
 	
@@ -52,7 +52,7 @@ class TSTreeDemo extends Sprite {
 		
 		Tests.run();
 		
-		tree = new TSTree<String>();
+		tree = new TSTree();
 		
 		dictInfo = TextBox.getTextField("", 150, 0);
 		addChild(dictInfo);
@@ -98,12 +98,12 @@ class TSTreeDemo extends Sprite {
 		tree.clear();
 		
 		stopWatch();
-		var dictPath:String = "assets/dict_25k.txt";
+		var dictPath:String = "assets/dict_350k.txt";
 		var isSerialized = dictPath.indexOf("serialized_") >= 0;	
 	#if sys	
 		var dictText:String = sys.io.File.getContent("../../../../" + dictPath);
 	#else
-		var dictText:String = Macros.readFile("assets/dict_25k.txt");
+		var dictText:String = Macros.readFile("assets/dict_350k.txt");
 	#end
 		//var dictText = haxe.Resource.getString("dictionary");
 		if (!isSerialized) dictWords = dictText.split("\r\n");
@@ -112,11 +112,11 @@ class TSTreeDemo extends Sprite {
 		
 		if (!isSerialized) {
 			/*for (word in dictWords) {
-				tree.insert(word, word);
+				tree.insert(word);
 			}*/
-			//tree.bulkInsert(dictWords, dictWords);
-			//tree.randomBulkInsert(dictWords, dictWords);
-			tree.balancedBulkInsert(dictWords, dictWords, false);
+			tree.bulkInsert(dictWords);
+			//tree.randomBulkInsert(dictWords);
+			//tree.balancedBulkInsert(dictWords, false);
 			//trace(tree.getBalancedIndices(dictWords));
 		} else {
 			tree = TSTree.unserialize(dictText);
@@ -153,20 +153,20 @@ class TSTreeDemo extends Sprite {
 	#end
 	}
 	
-	public function generateDOTFiles<T>(t:TSTree<T>, maxNodes:Int = 200):Void 
+	public function generateDOTFiles<T>(t:TSTree, maxNodes:Int = 200):Void 
 	{
 	#if sys
 		trace("Generating graphviz graphs...");
 		t.clear();
-		t.bulkInsert(dictWords, null);
+		t.bulkInsert(dictWords);
 		t.writeDotFile("bulkInsert.dot", null, maxNodes);
 		
 		t.clear();
-		t.randomBulkInsert(dictWords, null);
+		t.randomBulkInsert(dictWords);
 		t.writeDotFile("randomBulkInsert.dot", null, maxNodes);
 		
 		t.clear();
-		t.balancedBulkInsert(dictWords, null, false);
+		t.balancedBulkInsert(dictWords);
 		t.writeDotFile("balancedBulkInsert.dot", null, maxNodes);
 		
 		
