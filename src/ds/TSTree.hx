@@ -14,12 +14,13 @@ import sys.io.File;
  * 
  * Features:
  * 
- *  - Multiple search types (exact, prefix, pattern, hamming distance)
+ *  - Multiple search types (exact, prefix, pattern, Hamming distance)
  *  - Multiple insert modes (sequential, random, balanced)
  *  - Serialization/Unserialization
  *  - Association of arbitrary data to keys (like a Map<String, T>)
  *  - Returned keys (/data) are given in sorted order
- * 
+ *  - DOT format file writer (for visualization with tools like Graphviz)
+ *
  * @author azrafe7
  */
 class TSTree<T>
@@ -303,7 +304,7 @@ class TSTree<T>
 		return results;
 	}
 	
-	/** Writes a DOT file representing the tree (for visualization with tools like GraphViz. */
+	/** Writes a DOT file representing the tree (for visualization with tools like Graphviz). */
 	public function writeDotFile(path:String, ?label:String, maxNodes:Int = MAX_INT):Void 
 	{
 	#if !sys
