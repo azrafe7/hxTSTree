@@ -57,7 +57,6 @@ class TSTreeDemo extends Sprite {
 		dictInfo = TextBox.getTextField("", 150, 0);
 		addChild(dictInfo);
 		loadDictionary();
-		//quit();
 		
 		perfText = TextBox.getTextField("", 0, stage.stageHeight - 18);
 		addChild(perfText);
@@ -94,55 +93,64 @@ class TSTreeDemo extends Sprite {
 		//quit();
 	}
 	
-	
 	public function loadDictionary():Void 
 	{
 		tree.clear();
 		
 		stopWatch();
-		var dictText:String = Macros.readFile("assets/dict.txt");
+		var dictPath:String = "assets/dict_25k.txt";
+		var isSerialized = dictPath.indexOf("serialized_") >= 0;	
+	#if sys	
+		var dictText:String = sys.io.File.getContent("../../../../" + dictPath);
+	#else
+		var dictText:String = Macros.readFile("assets/dict_25k.txt");
+	#end
 		//var dictText = haxe.Resource.getString("dictionary");
-		dictWords = dictText.split("\r\n");
-		var loadTime = stopWatch();
-		/*for (word in dictWords) {
-			tree.insert(word, word);
-		}*/
-		//tree.randomBulkInsert(dictWords, dictWords);
-		//tree.balancedBulkInsert(dictWords, dictWords, false);
-		tree.bulkInsert(dictWords, dictWords);
+		if (!isSerialized) dictWords = dictText.split("\r\n");
 		
+		var loadTime = stopWatch();
+		
+		if (!isSerialized) {
+			/*for (word in dictWords) {
+				tree.insert(word, word);
+			}*/
+			//tree.bulkInsert(dictWords, dictWords);
+			//tree.randomBulkInsert(dictWords, dictWords);
+			tree.balancedBulkInsert(dictWords, dictWords, false);
+			//trace(tree.getBalancedIndices(dictWords));
+		} else {
+			tree = TSTree.unserialize(dictText);
+			trace("from serialized");
+		}
 		var insertTime = stopWatch();
-		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${loadTime}s, inserted in ${insertTime}s (${tree.numNodes} nodes)';
+		dictInfo.text = 'Dictionary: ${tree.numKeys} words loaded in ${loadTime}s, inserted in ${insertTime}s (${tree.numNodes} nodes)';
 		
 	#if sys
 		//generateDOTFiles(tree);
+		//if (!isSerialized) serialize(dictPath);
+		//tree.writeOptimizedDict("../../../../" + dictPath, "optimized_" + dictPath.substr(dictPath.lastIndexOf("/") + 1));
+	#end
+		//quit();
+	}
+	
+	public function serialize(dictPath:String):Void 
+	{
+	#if sys
+		var filename = "serialized_" + dictPath.substr(dictPath.lastIndexOf("/") + 1);
 		
-		/*var sequence = tree.getBalancedIndices(dictWords);
-		var buf = new StringBuf();
-		for (i in sequence) {
-			buf.add(dictWords[i] + "\r\n");
-		}
-		sys.io.File.saveContent("dict.txt", buf.toString());
-		*/
-		
-		/*stopWatch();
-		tree.writeDotFile("tstree_bulkInsert.dot", "bulkInsert()", 200);
-		trace(stopWatch());
-		*/
-		
+		trace("Serializing");
 		stopWatch();
 		var str = tree.serialize();
 		trace(stopWatch(), str.length);
-		sys.io.File.saveContent("serializedTree.txt", str);
+		sys.io.File.saveContent(filename, str);
 	
-		str = sys.io.File.getContent("serializedTree.txt");
+		trace("Unserializing");
+		str = sys.io.File.getContent(filename);
 		stopWatch();
 		var uTree = TSTree.unserialize(str);
 		trace(stopWatch(), uTree.numKeys);
 		tree = uTree;
 	#end
-		//trace('Dictionary: ${dictWords.length} words loaded in ${delta}s');
-		//quit();
 	}
 	
 	public function generateDOTFiles<T>(t:TSTree<T>, maxNodes:Int = 200):Void 

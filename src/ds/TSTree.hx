@@ -79,7 +79,6 @@ class TSTree<T>
 			var idx = indices[i];
 			insert(keys[idx], values != null ? values[idx] : null);
 		}
-		indices = null;
 	}
 	
 	/** 
@@ -102,12 +101,10 @@ class TSTree<T>
 			});
 		}
 		
-		var sequence = getBalancedIndices(indices);
+		var sequence = getBalancedIndices(indices.length);
 		for (i in sequence) {
-			insert(keys[i], values != null ? values[i] : null);
+			insert(keys[indices[i]], values != null ? values[indices[i]] : null);
 		}
-		indices = null;
-		sequence = null;
 	}
 	
 	/** Inserts key-value pairs in sequential order. */
@@ -130,16 +127,20 @@ class TSTree<T>
 		balancedBulkInsert(keys, values);
 	}
 	
-	/** Returns an array containing balanced indices for `sortedKeys`. */
-	public function getBalancedIndices(sortedKeys:Array<Dynamic>):Array<Int>
+	/** 
+	 * Returns an array of length `length` containing balanced indices.
+	 * 
+	 * (i.e. indices for inserting a _sorted_ sequence of `length` keys in
+	 * almost optimal order) 
+	 */
+	public function getBalancedIndices(length):Array<Int>
 	{
-		var len = sortedKeys.length;
-		var indices = [for (i in 0...sortedKeys.length) i];
+		var indices = [for (i in 0...length) i];
 		
 		// build balanced sequence
 		var queue = new List();
 		queue.add(0);
-		queue.add(len);
+		queue.add(length);
 		
 		var sequence = [];
 		while (queue.length > 0) {
@@ -154,7 +155,7 @@ class TSTree<T>
 			
 			sequence.push(indices[mid]);
 			if (leftRange == 1) sequence.push(indices[start]);
-			if (rightRange == 1 && end < len) sequence.push(indices[end]);
+			if (rightRange == 1 && end < length) sequence.push(indices[end]);
 			
 			if (leftRange > 1) {
 				queue.add(start);
@@ -381,7 +382,42 @@ class TSTree<T>
 	#end
 	}
 
-	/** Serializes the whole tree (keys + data) to a string. */
+	/** 
+	 * Reads the keys from `inputFile` (one key per line) and rewrites them
+	 * to `outputFile` in optimized order for loaing with bulkInsert().
+	 */
+	public function writeOptimizedDict(inputFile:String, outputFile:String, newLine:String = "\r\n"):Void 
+	{
+	#if !sys
+		trace("Cannot write to file in non-system platform!");
+	#else
+		var content = sys.io.File.getContent(inputFile);
+		var keys = content.split(newLine);
+		
+		var indices = [for (i in 0...keys.length) i];
+		// sort lexicographically and store indices
+		ArraySort.sort(indices, function (a:Int, b:Int):Int
+		{
+			var keyA:String = keys[a];
+			var keyB:String = keys[b];
+			return keyA > keyB ? 1 : keyA < keyB ? -1 : 0;
+		});
+		
+		var sequence = getBalancedIndices(indices.length);
+		var stringBuffer = new StringBuf();
+		for (i in sequence) {
+			stringBuffer.add(keys[indices[i]] + newLine);
+		}
+		
+		sys.io.File.saveContent(outputFile, stringBuffer.toString());
+	#end
+	}
+	
+	/** 
+	 * Serializes the whole tree (keys + data) to a string.
+	 * 
+	 * Relies on haxe.Serializer, so all its restrictions also apply.
+	 */
 	public function serialize():String
 	{
 		var serializer = new Serializer();
@@ -389,18 +425,21 @@ class TSTree<T>
 		serializer.serialize(numKeys);
 		var keyDataPairs = getAll();
 		
-		var sequence = getBalancedIndices(keyDataPairs);
+		var sequence = getBalancedIndices(keyDataPairs.length);
 		
 		// serialize keyValuePairs in sequence order
 		for (i in 0...sequence.length) {
 			serializer.serialize(keyDataPairs[sequence[i]]);
 		}
-		sequence = null;
 		
 		return serializer.toString();
 	}
 
-	/** Unserializes a string obtained with serialize() into a new TSTree. */
+	/** 
+	 * Unserializes a string obtained with serialize() into a new TSTree.
+	 * 
+	 * Relies on haxe.Unserializer, so all its restrictions also apply.
+	 */
 	static public function unserialize<T>(buf:String):TSTree<T>
 	{
 		var unserializer = new Unserializer(buf);

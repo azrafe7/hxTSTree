@@ -1,7 +1,7 @@
 hxTSTree
 ========
 
-A Ternary Search Tree in Haxe 3.1+.
+A [Ternary Search Tree](http://en.wikipedia.org/wiki/Ternary_search_tree) in Haxe 3.1+.
 
 ![](screenshot.png)
 
