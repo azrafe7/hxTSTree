@@ -100,7 +100,7 @@ class TSTreeDemo extends Sprite {
 		tree.clear();
 		
 		stopWatch();
-		var dictText:String = Macros.readFile("assets/dict_350k.txt");
+		var dictText:String = Macros.readFile("assets/dict.txt");
 		//var dictText = haxe.Resource.getString("dictionary");
 		dictWords = dictText.split("\r\n");
 		var loadTime = stopWatch();
@@ -109,19 +109,22 @@ class TSTreeDemo extends Sprite {
 		}*/
 		//tree.randomBulkInsert(dictWords, dictWords);
 		//tree.balancedBulkInsert(dictWords, dictWords, false);
-		tree.balancedBulkInsert(dictWords, dictWords);
+		tree.bulkInsert(dictWords, dictWords);
 		
 		var insertTime = stopWatch();
 		dictInfo.text = 'Dictionary: ${dictWords.length} words loaded in ${loadTime}s, inserted in ${insertTime}s (${tree.numNodes} nodes)';
 		
 	#if sys
-		generateDOTFiles(tree);
-		var sequence = tree.getBalancedIndices(dictWords);
+		//generateDOTFiles(tree);
+		
+		/*var sequence = tree.getBalancedIndices(dictWords);
 		var buf = new StringBuf();
 		for (i in sequence) {
 			buf.add(dictWords[i] + "\r\n");
 		}
 		sys.io.File.saveContent("dict.txt", buf.toString());
+		*/
+		
 		/*stopWatch();
 		tree.writeDotFile("tstree_bulkInsert.dot", "bulkInsert()", 200);
 		trace(stopWatch());

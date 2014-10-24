@@ -145,7 +145,7 @@ class TSTree<T>
 	{
 		var node = getNodeFor(root, key);
 		if (node != null) {
-			node.splitChar = node.splitChar.substr(0, 1);
+			node.key = null;
 			node.isKey = false;
 			node.data = null;
 			numKeys--;
@@ -201,7 +201,7 @@ class TSTree<T>
 		traverse(root, function (node:Node<T>):Void 
 		{
 			if (node.isKey) {
-				results.push({key:node.splitChar.substr(1), data:node.data});
+				results.push({key:node.key, data:node.data});
 			}
 		});
 		
@@ -214,7 +214,7 @@ class TSTree<T>
 		traverse(root, function (node:Node<T>):Void 
 		{
 			if (node.isKey) {
-				results.push(node.splitChar.substr(1));
+				results.push(node.key);
 			}
 		});
 		
@@ -257,7 +257,7 @@ class TSTree<T>
 			countNodes++;
 			
 			var curr = '"${idx}" ';
-			if (node.isKey) curr += '[label="${node.splitChar.charAt(0)}|${node.splitChar.substr(1)}", color=red]';
+			if (node.isKey) curr += '[label="${node.splitChar}|${node.key}", color=red]';
 			else curr += '[label="${node.splitChar}"]';
 			
 			// curr node
@@ -355,7 +355,7 @@ class TSTree<T>
 			node = createNode(key.charAt(idx));
 		}
 		
-		var splitChar = node.splitChar.charAt(0);
+		var splitChar = node.splitChar;
 		var char = key.charAt(idx);
 		var len = key.length;
 		
@@ -366,7 +366,7 @@ class TSTree<T>
 				node.data = data;
 				if (!node.isKey) numKeys++;
 				node.isKey = true;
-				node.splitChar = char + key;
+				node.key = key;
 			} else {
 				node.eqKid = _recurInsert(node.eqKid, key, data, ++idx);
 			}
@@ -403,7 +403,7 @@ class TSTree<T>
 				root = node = createNode(key.charAt(idx));
 			}
 			
-			var splitChar = node.splitChar.charAt(0);
+			var splitChar = node.splitChar;
 			var char = key.charAt(idx);
 			
 			if (char < splitChar) {
@@ -414,7 +414,7 @@ class TSTree<T>
 					node.data = data;
 					if (!node.isKey) numKeys++;
 					node.isKey = true;
-					node.splitChar = char + key;
+					node.key = key;
 				} else {
 					if (node.eqKid == null) node.eqKid = createNode(key.charAt(idx + 1));
 					node = node.eqKid;
@@ -434,7 +434,7 @@ class TSTree<T>
 		
 		while (node != null) {
 			examinedNodes++;
-			var splitChar = node.splitChar.charAt(0);
+			var splitChar = node.splitChar;
 			var char = key.charAt(idx);
 			
 			if (char < splitChar) {
@@ -460,7 +460,7 @@ class TSTree<T>
 		var len = prefix.length;
 		while (node != null && maxResults > 0) {
 			examinedNodes++;
-			var splitChar = node.splitChar.charAt(0);
+			var splitChar = node.splitChar;
 			var char = prefix.charAt(idx);
 			
 			if (char < splitChar) {
@@ -468,7 +468,7 @@ class TSTree<T>
 			} else if (char == splitChar) {
 				if (idx == len - 1) {
 					if (node.isKey && maxResults > 0) {
-						results.push(node.splitChar.substr(1));
+						results.push(node.key);
 						maxResults--;
 					}
 					getAllKeysFrom(node.eqKid, results);
@@ -495,7 +495,7 @@ class TSTree<T>
 			getAllKeysFrom(node.loKid, results);
 		}
 		if (node.isKey) {
-			if (maxResults > 0) results.push(node.splitChar.substr(1));
+			if (maxResults > 0) results.push(node.key);
 			maxResults--;
 		}
 		if (node.eqKid != null) {
@@ -515,7 +515,7 @@ class TSTree<T>
 		if (node == null || maxResults <= 0) return results;
 		
 		examinedNodes++;
-		var splitChar = node.splitChar.charAt(0);
+		var splitChar = node.splitChar;
 		var char = pattern.charAt(idx);
 		var len = pattern.length;
 		var isAny = char == ANY_CHAR;
@@ -527,7 +527,7 @@ class TSTree<T>
 			if (idx < len - 1 && node.eqKid != null) {
 				_patternSearch(node.eqKid, pattern, results, idx + 1);
 			} else if (idx == len - 1 && node.isKey) {
-				if (maxResults > 0) results.push(node.splitChar.substr(1));
+				if (maxResults > 0) results.push(node.key);
 				maxResults--;
 			}
 		}
@@ -545,7 +545,7 @@ class TSTree<T>
 		if (node == null || distance < 0 || maxResults <= 0) return results;
 		
 		examinedNodes++;
-		var splitChar = node.splitChar.charAt(0);
+		var splitChar = node.splitChar;
 		var char = key.charAt(idx);
 		var len = key.length;
 		var examineEqKid = true;
@@ -554,7 +554,7 @@ class TSTree<T>
 			_distanceSearch(node.loKid, key, distance, results, idx);
 		}
 		if (node.isKey) {
-			var nodeKey = node.splitChar.substr(1);
+			var nodeKey = node.key;
 			var lengthDiff = nodeKey.length - len;
 			var dist = distance - (char != splitChar ? 1 : 0);
 			if (len - idx - 1 <= dist && lengthDiff == 0) {
@@ -581,6 +581,7 @@ private class Node<T>
 	public var eqKid:Node<T> = null;
 	public var hiKid:Node<T> = null;
 	public var data:T;
+	public var key:String;
 	public var isKey:Bool = false;
 	
 	public function new(char:String):Void 
