@@ -29,7 +29,9 @@ class TSTree<T>
 	
 	public var examinedNodes(default, null):Int = 0;
 	
-	public var root:Node<T> = null;
+	
+	var root:Node<T> = null;
+	
 	
 	public function new() 
 	{
@@ -78,36 +80,12 @@ class TSTree<T>
 			});
 		}
 		
-		// balanced insert
-		var len = keys.length;
-		var queue = new List();
-		queue.add(0);
-		queue.add(len);
-		
-		while (queue.length > 0) {
-			var start = queue.first();
-			queue.remove(start);
-			var end = queue.first();
-			queue.remove(end);
-			var mid = ((end - start) >> 1) + start;
-			
-			var rightRange = end - mid;
-			var leftRange = mid - start;
-			
-			insert(keys[indices[mid]], values != null ? values[indices[mid]] : null);
-			if (leftRange == 1) insert(keys[indices[start]], values != null ? values[indices[start]] : null);
-			if (rightRange == 1 && end < len) insert(keys[indices[end]], values != null ? values[indices[end]] : null);
-			
-			if (leftRange > 1) {
-				queue.add(start);
-				queue.add(mid - 1);
-			}
-			if (rightRange > 1) {
-				queue.add(mid + 1);
-				queue.add(end);
-			}
+		var sequence = getBalancedIndices(indices);
+		for (i in sequence) {
+			insert(keys[i], values != null ? values[i] : null);
 		}
 		indices = null;
+		sequence = null;
 	}
 	
 	public function bulkInsert(keys:Array<String>, ?values:Array<T>):Void 
@@ -118,6 +96,44 @@ class TSTree<T>
 		for (i in 0...keys.length) {
 			_insert(keys[i], values != null ? values[i] : null);
 		}
+	}
+
+	public function getBalancedIndices(sortedKeys:Array<Dynamic>):Array<Int>
+	{
+		var len = sortedKeys.length;
+		var indices = [for (i in 0...sortedKeys.length) i];
+		
+		// build balanced sequence
+		var queue = new List();
+		queue.add(0);
+		queue.add(len);
+		
+		var sequence = [];
+		while (queue.length > 0) {
+			var start = queue.first();
+			queue.remove(start);
+			var end = queue.first();
+			queue.remove(end);
+			var mid = ((end - start) >> 1) + start;
+			
+			var rightRange = end - mid;
+			var leftRange = mid - start;
+			
+			sequence.push(indices[mid]);
+			if (leftRange == 1) sequence.push(indices[start]);
+			if (rightRange == 1 && end < len) sequence.push(indices[end]);
+			
+			if (leftRange > 1) {
+				queue.add(start);
+				queue.add(mid - 1);
+			}
+			if (rightRange > 1) {
+				queue.add(mid + 1);
+				queue.add(end);
+			}
+		}
+		
+		return sequence;
 	}
 
 	public function insert(key:String, ?data:T)
@@ -186,6 +202,32 @@ class TSTree<T>
 		{
 			if (node.isKey) {
 				results.push({key:node.splitChar.substr(1), data:node.data});
+			}
+		});
+		
+		return results;
+	}
+	
+	public function getAllKeys():Array<String>
+	{
+		var results = [];
+		traverse(root, function (node:Node<T>):Void 
+		{
+			if (node.isKey) {
+				results.push(node.splitChar.substr(1));
+			}
+		});
+		
+		return results;
+	}
+	
+	public function getAllData():Array<T>
+	{
+		var results = [];
+		traverse(root, function (node:Node<T>):Void 
+		{
+			if (node.isKey) {
+				results.push(node.data);
 			}
 		});
 		
@@ -275,52 +317,13 @@ class TSTree<T>
 		serializer.serialize(numKeys);
 		var keyDataPairs = getAll();
 		
-		var indices = [for (i in 0...keyDataPairs.length) i];
+		var sequence = getBalancedIndices(keyDataPairs);
 		
-		// build balanced sequence
-		var len = keyDataPairs.length;
-		var queue = new List();
-		queue.add(0);
-		queue.add(len);
-		
-		var sequence = [];
-		while (queue.length > 0) {
-			var start = queue.first();
-			queue.remove(start);
-			var end = queue.first();
-			queue.remove(end);
-			var mid = ((end - start) >> 1) + start;
-			
-			var rightRange = end - mid;
-			var leftRange = mid - start;
-			
-			sequence.push(indices[mid]);
-			if (leftRange == 1) sequence.push(indices[start]);
-			if (rightRange == 1 && end < len) sequence.push(indices[end]);
-			
-			if (leftRange > 1) {
-				queue.add(start);
-				queue.add(mid - 1);
-			}
-			if (rightRange > 1) {
-				queue.add(mid + 1);
-				queue.add(end);
-			}
-		}
-		
-		// rearrange keyValuePairs in sequence order
+		// serialize keyValuePairs in sequence order
 		for (i in 0...sequence.length) {
-			/*if (i < sequence.length - 1) {
-				var temp = keyDataPairs[sequence[i]];
-				keyDataPairs[sequence[i]] = keyDataPairs[sequence[i + 1]];
-				keyDataPairs[sequence[i + 1]] = temp;
-			}*/
 			serializer.serialize(keyDataPairs[sequence[i]]);
 		}
-		indices = null;
 		sequence = null;
-		
-		//serializer.serialize(keyDataPairs);
 		
 		return serializer.toString();
 	}
@@ -332,11 +335,7 @@ class TSTree<T>
 		
 		var numNodes = unserializer.unserialize();
 		var numKeys = unserializer.unserialize();
-		/*var keyDataPairs:Array<{key:String, data:T}> = unserializer.unserialize();
-		for (i in 0...keyDataPairs.length) {
-			var pair = keyDataPairs[i];
-			tree._insert(pair.key, pair.data);
-		}*/
+		
 		for (i in 0...numKeys) {
 			var pair = unserializer.unserialize();
 			tree._insert(pair.key, pair.data);

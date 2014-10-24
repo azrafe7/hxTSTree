@@ -41,9 +41,11 @@ class Tests extends TestCase
 		tree.remove(dict[0]);
 		assertEquals(dict.length - 1, tree.numKeys);
 		tree.insert(dict[0], dict[0]);
+		assertEquals(tree.getAll().length, tree.getAllData().length);
+		assertEquals(tree.getAllKeys().length, tree.getAllData().length);
 	}
 	
-	public function testContains():Void 
+	public function testHasKey():Void 
 	{
 		assertFalse(tree.hasKey(""));
 		assertTrue(tree.hasKey("in"));
@@ -68,14 +70,14 @@ class Tests extends TestCase
 		assertEquals("[in,inn,inner]", Std.string(tree.prefixSearch("in")));
 	}
 	
-	public function testMatchSearch():Void 
+	public function testPatternSearch():Void 
 	{
 		assertTrue(tree.patternSearch("").length == 0);
 		assertEquals("[fin,gin,pin]", Std.string(tree.patternSearch(".in")));
 		assertEquals("[pin,pit]", Std.string(tree.patternSearch("p..")));
 	}
 	
-	public function testNearestSearch():Void 
+	public function testDistanceSearch():Void 
 	{
 		assertTrue(tree.distanceSearch("", 3).length == 0);
 		assertEquals("[]", Std.string(tree.distanceSearch("min", 0)));
