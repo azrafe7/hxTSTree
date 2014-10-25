@@ -48,6 +48,7 @@ class Tests extends TestCase
 	public function testHasKey():Void 
 	{
 		assertFalse(tree.hasKey(""));
+		assertFalse(tree.hasKey("party"));
 		assertTrue(tree.hasKey("in"));
 		assertTrue(tree.hasKey("inn"));
 		assertFalse(tree.hasKey("john"));
@@ -57,6 +58,7 @@ class Tests extends TestCase
 	{
 		assertTrue(tree.getDataFor("John") == "John");
 		assertTrue(tree.getDataFor("") == null);
+		assertTrue(tree.getDataFor("pity") == null);
 		assertTrue(tree.getDataFor("pit") == "pit");
 		assertTrue(tree.getDataFor("in") == "in");
 		tree.insert("in", "overwritten");
@@ -86,6 +88,38 @@ class Tests extends TestCase
 		assertEquals("[fin,gin,inn,pin,pit]", Std.string(tree.distanceSearch("min", 2)));
 		assertEquals("[an,in]", Std.string(tree.distanceSearch("io", 5)));
 		assertEquals("[an,in]", Std.string(tree.distanceSearch("_n", 1)));
+	}
+	
+	public function testSortedOrder():Void 
+	{
+		var sorted = [].concat(dict);
+		ArraySort.sort(sorted, function (keyA:String, keyB:String):Int
+		{
+			return keyA > keyB ? 1 : keyA < keyB ? -1 : 0;
+		});
+	
+		assertEquals(sorted.toString(), tree.getAllKeys().toString());
+	}
+	
+	public function testSerialization():Void 
+	{
+		var currTree:TSTree<String> = tree;
+		
+		var serializedStr = currTree.serialize();
+		var unserializedTree = TSTree.unserialize(serializedStr);
+		assertEquals(currTree.getAllKeys().toString(), unserializedTree.getAllKeys().toString());
+		assertEquals(currTree.getAllData().toString(), unserializedTree.getAllData().toString());
+		assertTrue(currTree.numKeys == unserializedTree.numKeys);
+		assertTrue(currTree.numNodes == unserializedTree.numNodes);
+
+		// test empty tree
+		currTree = new TSTree();
+		serializedStr = currTree.serialize();
+		unserializedTree = TSTree.unserialize(serializedStr);
+		assertEquals(currTree.getAllKeys().toString(), unserializedTree.getAllKeys().toString());
+		assertEquals(currTree.getAllData().toString(), unserializedTree.getAllData().toString());
+		assertTrue(currTree.numKeys == unserializedTree.numKeys);
+		assertTrue(currTree.numNodes == unserializedTree.numNodes);
 	}
 	
 	static public function run():Void 
