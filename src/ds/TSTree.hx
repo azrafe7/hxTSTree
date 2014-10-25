@@ -135,6 +135,7 @@ class TSTree<T>
 	 */
 	public function getBalancedIndices(length):Array<Int>
 	{
+		if (length <= 0) return [];
 		var indices = [for (i in 0...length) i];
 		
 		// build balanced sequence
