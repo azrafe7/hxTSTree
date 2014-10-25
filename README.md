@@ -14,7 +14,7 @@ Based on Dr. Dobbs article ([http://www.drdobbs.com/database/ternary-search-tree
  - Multiple search types (exact, prefix, pattern, [Hamming distance](http://en.wikipedia.org/wiki/Hamming_distance))
  - Multiple insert modes (sequential, random, balanced)
  - Serialization/Unserialization
- - Association of arbitrary data to keys (like a Map<String, T>)
+ - Association of arbitrary data to keys (~like a `Map\<String, T\>`)
  - Returned keys (/data) are given in sorted order
  - DOT format file writer (for visualization with tools like [Graphviz](http://www.graphviz.org/)) 
 
