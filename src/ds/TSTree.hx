@@ -41,7 +41,7 @@ class TSTree<T>
 	/** Number of keys in the tree. */
 	public var numKeys(default, null):Int = 0;
 	
-	/** Number of nodes examined during the last operation. */
+	/** Number of nodes examined during the last search operation. */
 	public var examinedNodes(default, null):Int = 0;
 	
 	
@@ -118,7 +118,10 @@ class TSTree<T>
 		}
 	}
 
-	/** Rebalances the tree by extracting all nodes and reinserting them in balanced order. */
+	/** 
+	 * Rebalances the tree by extracting all nodes and reinserting them in balanced order 
+	 * (gets also rid of keys marked for removal). 
+	 */
 	public function rebalance():Void 
 	{
 		var keys = getAllKeys();
@@ -180,9 +183,10 @@ class TSTree<T>
 	/**
 	 * Removes `key` from the tree.
 	 * 
-	 * (actually the corresponding nodes are not deleted - as this
+	 * (Actually the corresponding nodes are not deleted - as this
 	 * would be a very expensive operation - so the key is simply
-	 * marked to not be used and the associated data is set to null)
+	 * marked to not be used and the associated data is set to null.
+	 * Use rebalance() afterwards to effectively get rid of them.)
 	 */
 	public function remove(key:String):Bool
 	{
@@ -268,8 +272,7 @@ class TSTree<T>
 	public function getAll():Array<{key:String, data:T}>
 	{
 		var results = [];
-		traverse(root, function (node:Node<T>):Void 
-		{
+		traverse(root, function (node:Node<T>):Void {
 			if (node.isKey) {
 				results.push({key:node.key, data:node.data});
 			}
@@ -282,8 +285,7 @@ class TSTree<T>
 	public function getAllKeys():Array<String>
 	{
 		var results = [];
-		traverse(root, function (node:Node<T>):Void 
-		{
+		traverse(root, function (node:Node<T>):Void {
 			if (node.isKey) {
 				results.push(node.key);
 			}
@@ -296,8 +298,7 @@ class TSTree<T>
 	public function getAllData():Array<T>
 	{
 		var results = [];
-		traverse(root, function (node:Node<T>):Void 
-		{
+		traverse(root, function (node:Node<T>):Void {
 			if (node.isKey) {
 				results.push(node.data);
 			}
@@ -510,9 +511,8 @@ class TSTree<T>
 	
 	function _insert(key:String, data:T):Void
 	{
-	#if debug
-		if (key == null || key.length < 1) throw "Cannot insert empty or null string as key.";
-	#end	
+		if (key == null || key.length < 1) return; // don't insert empty or null key
+		
 		var idx = 0;
 		var node = root;
 		var len = key.length;
@@ -545,7 +545,7 @@ class TSTree<T>
 		}
 	}
 	
-	function getNodeFor(node:Node<T>, key:String):Node<T>
+	function getNodeFor(node:Node<T>, key:String, callback:Node<T>->Void = null):Node<T>
 	{
 		var idx:Int = 0;
 		var len = key.length;
@@ -554,6 +554,8 @@ class TSTree<T>
 			examinedNodes++;
 			var splitChar = node.splitChar;
 			var char = key.charAt(idx);
+			
+			if (callback != null) callback(node);
 			
 			if (char < splitChar) {
 				node = node.loKid;

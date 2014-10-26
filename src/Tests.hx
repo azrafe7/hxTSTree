@@ -33,6 +33,10 @@ class Tests extends TestCase
 		
 		tree.clear();
 		tree.balancedBulkInsert(dict, dict);
+		
+	#if sys
+		tree.writeDotFile("test_dict.dot");
+	#end
     }
 	
 	public function testLength():Void 
@@ -120,6 +124,27 @@ class Tests extends TestCase
 		assertEquals(currTree.getAllData().toString(), unserializedTree.getAllData().toString());
 		assertTrue(currTree.numKeys == unserializedTree.numKeys);
 		assertTrue(currTree.numNodes == unserializedTree.numNodes);
+	}
+	
+	public function testPrevNext():Void 
+	{
+		/*
+		assertEquals(null, tree.prevOf(""));
+		assertEquals(null, tree.prevOf("pony"));
+		assertEquals(null, tree.prevOf("John"));
+		assertEquals("pin", tree.prevOf("pint"));
+		*/
+		
+		/*
+		assertEquals(null, tree.nextOf(""));
+		assertEquals(null, tree.nextOf("pony"));
+		assertEquals(null, tree.nextOf("pit"));
+		assertEquals("pit", tree.nextOf("pint"));
+		
+		for (k in dict) trace(k + " -> " + tree.nextOf(k));
+		*/
+		//tree.nextOf("John");
+
 	}
 	
 	static public function run():Void 
