@@ -11,7 +11,7 @@ Based on Dr. Dobbs article ([http://www.drdobbs.com/database/ternary-search-tree
 
 **Features:**
 
- - Multiple search types (exact, prefix, pattern, [Hamming distance](http://en.wikipedia.org/wiki/Hamming_distance))
+ - Multiple search types (exact, prefix, pattern, [Hamming distance](http://en.wikipedia.org/wiki/Hamming_distance), [Levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance))
  - Multiple insert modes (sequential, random, balanced)
  - Serialization/Unserialization
  - Association of arbitrary data to keys (~like a `Map<String, T>`)

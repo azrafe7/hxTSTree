@@ -14,7 +14,7 @@ import sys.io.File;
  * 
  * Features:
  * 
- *  - Multiple search types (exact, prefix, pattern, Hamming distance)
+ *  - Multiple search types (exact, prefix, pattern, Hamming distance, Levenshtein distance)
  *  - Multiple insert modes (sequential, random, balanced)
  *  - Serialization/Unserialization
  *  - Association of arbitrary data to keys (like a Map<String, T>)
