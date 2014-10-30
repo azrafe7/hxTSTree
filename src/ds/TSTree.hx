@@ -212,6 +212,7 @@ class TSTree<T>
 	public function hasKey(key:String):Bool
 	{
 		examinedNodes = 0;
+		if (key == null || key.length == 0) return false;
 		return getNodeFor(root, key) != null;
 	}
 	
@@ -225,6 +226,8 @@ class TSTree<T>
 	{
 		examinedNodes = 0;
 		this.maxResults = maxResults;
+		if (results == null) results = [];
+		if (prefix == null || prefix.length == 0) return results;
 		return _prefixSearch(root, prefix, results);
 	}
 	
@@ -240,6 +243,8 @@ class TSTree<T>
 	{
 		examinedNodes = 0;
 		this.maxResults = maxResults;
+		if (results == null) results = [];
+		if (pattern == null || pattern.length == 0) return results;
 		return _patternSearch(root, pattern, results);
 	}
 	
@@ -251,19 +256,43 @@ class TSTree<T>
 	 * @param	results		Matching keys will be appended to this array.
 	 * @param	maxResults	Max number of results allowed.
 	 */
-	public function distanceSearch(key:String, distance:Int, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
+	public function hammingSearch(key:String, distance:Int, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
 	{
 		examinedNodes = 0;
 		this.maxResults = maxResults;
+		if (results == null) results = [];
+		if (key == null || key.length == 0) return results;
 		if (distance < 0) distance = 0;
 		if (distance > key.length) distance = key.length;
-		return _distanceSearch(root, key, distance, results);
+		return _hammingSearch(root, key, distance, results);
+	}
+	
+	/**
+	 * Searches the tree for keys within Levenshtein `distance` from `key`.
+	 * 
+	 * @see http://en.wikipedia.org/wiki/Levenshtein_distance
+	 * 
+	 * @param	results		Matching keys will be appended to this array.
+	 * @param	maxResults	Max number of results allowed.
+	 */
+	public function levenshteinSearch(key:String, distance:Int, ?results:Array<String>, maxResults:Int = MAX_INT):Array<String>
+	{
+		examinedNodes = 0;
+		this.maxResults = maxResults;
+		if (results == null) results = [];
+		if (key == null || key.length == 0) return results;
+		if (distance < 0) distance = 0;
+		if (distance > key.length) distance = key.length;
+		
+		var currentRow = [for (i in 0...key.length + 1) i];
+		return _levenshteinSearch(root, key, currentRow, distance, results);
 	}
 	
 	/** Returns the data associated with `key` (or null if `key` is not found). */
 	public function getDataFor(key:String):T 
 	{
 		examinedNodes = 0;
+		if (key == null || key.length == 0) return null;
 		var node = getNodeFor(root, key);
 		return node != null ? node.data : null;
 	}
@@ -573,10 +602,8 @@ class TSTree<T>
 		return null;
 	}
 	
-	function _prefixSearch(node:Node<T>, prefix:String, ?results:Array<String>, idx:Int = 0):Array<String>
+	function _prefixSearch(node:Node<T>, prefix:String, results:Array<String>, idx:Int = 0):Array<String>
 	{
-		if (results == null) results = [];
-
 		var len = prefix.length;
 		while (node != null && maxResults > 0) {
 			examinedNodes++;
@@ -604,10 +631,8 @@ class TSTree<T>
 		return results;
 	}
 	
-	function getAllKeysFrom(node:Node<T>, ?results:Array<String>):Array<String>
+	function getAllKeysFrom(node:Node<T>, results:Array<String>):Array<String>
 	{
-		if (results == null) results = [];
-
 		if (node == null || maxResults <= 0) return results;
 
 		examinedNodes++;
@@ -628,10 +653,8 @@ class TSTree<T>
 		return results;
 	}
 	
-	function _patternSearch(node:Node<T>, pattern:String, ?results:Array<String>, idx:Int = 0):Array<String>
+	function _patternSearch(node:Node<T>, pattern:String, results:Array<String>, idx:Int = 0):Array<String>
 	{
-		if (results == null) results = [];
-		
 		if (node == null || maxResults <= 0) return results;
 		
 		examinedNodes++;
@@ -658,10 +681,8 @@ class TSTree<T>
 		return results;
 	}
 	
-	function _distanceSearch(node:Node<T>, key:String, distance:Int, ?results:Array<String>, idx:Int = 0):Array<String>
+	function _hammingSearch(node:Node<T>, key:String, distance:Int, results:Array<String>, idx:Int = 0):Array<String>
 	{
-		if (results == null) results = [];
-		
 		if (node == null || distance < 0 || maxResults <= 0) return results;
 		
 		examinedNodes++;
@@ -671,7 +692,7 @@ class TSTree<T>
 		var examineEqKid = true;
 		
 		if ((distance > 0 || char < splitChar) && node.loKid != null) {
-			_distanceSearch(node.loKid, key, distance, results, idx);
+			_hammingSearch(node.loKid, key, distance, results, idx);
 		}
 		if (node.isKey) {
 			var nodeKey = node.key;
@@ -684,11 +705,64 @@ class TSTree<T>
 			examineEqKid = lengthDiff < 0;
 		}
 		if (node.eqKid != null && examineEqKid) {
-			_distanceSearch(node.eqKid, key, char == splitChar ? distance : distance - 1, results, idx + 1);
+			_hammingSearch(node.eqKid, key, char == splitChar ? distance : distance - 1, results, idx + 1);
 		}
 		if ((distance > 0 || char > splitChar) && node.hiKid != null) {
-			_distanceSearch(node.hiKid, key, distance, results, idx);
+			_hammingSearch(node.hiKid, key, distance, results, idx);
 		} 
+		
+		return results;
+	}
+	
+	function _levenshteinSearch(node:Node<T>, key:String, previousRow:Array<Int>, distance:Int, results:Array<String>, idx:Int = 0, prevMinCost:Int = 0):Array<String>
+	{
+		if (node == null || distance < 0 || maxResults <= 0) return results;
+		
+		examinedNodes++;
+		var splitChar = node.splitChar;
+		var char = key.charAt(idx);
+		var len = key.length;
+		var examineEqKid = true;
+		
+		if ((prevMinCost <= distance || char < splitChar) && node.loKid != null) {
+			_levenshteinSearch(node.loKid, key, previousRow, distance, results, idx, prevMinCost);
+		}
+		
+		if (node.eqKid != null || node.isKey) {
+			
+			// calc currentRow of Levenshtein distances
+			var columns = len + 1;
+			var currentRow = [previousRow[0] + 1];
+			var minCost = MAX_INT;
+			for (col in 1...columns) {
+				var insertCost = currentRow[col - 1] + 1;
+				var deleteCost = previousRow[col] + 1;
+				var replaceCost = previousRow[col - 1];
+				
+				if (key.charAt(col - 1) != splitChar) replaceCost++;
+				
+				var currMinCost = insertCost < deleteCost ? insertCost : deleteCost;
+				if (replaceCost < currMinCost) currMinCost = replaceCost;
+				
+				currentRow.push(currMinCost);
+				if (currMinCost < minCost) minCost = currMinCost;
+			}
+			
+			if (node.isKey) {
+				if (currentRow[len] <= distance) {
+					if (maxResults > 0) results.push(node.key);
+					maxResults--;
+				}
+				examineEqKid = minCost <= distance;
+			}
+			if (node.eqKid != null && examineEqKid) {
+				_levenshteinSearch(node.eqKid, key, currentRow, distance, results, idx + 1, minCost);
+			}
+		}
+		
+		if ((prevMinCost <= distance || char > splitChar) && node.hiKid != null) {
+			_levenshteinSearch(node.hiKid, key, previousRow, distance, results, idx, prevMinCost);
+		}
 		
 		return results;
 	}

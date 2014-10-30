@@ -83,15 +83,25 @@ class Tests extends TestCase
 		assertEquals("[pin,pit]", Std.string(tree.patternSearch("p..")));
 	}
 	
-	public function testDistanceSearch():Void 
+	public function testHammingSearch():Void 
 	{
-		assertTrue(tree.distanceSearch("", 3).length == 0);
-		assertEquals("[]", Std.string(tree.distanceSearch("min", 0)));
-		assertEquals("[pin]", Std.string(tree.distanceSearch("pin", 0)));
-		assertEquals("[fin,gin,pin]", Std.string(tree.distanceSearch("min", 1)));
-		assertEquals("[fin,gin,inn,pin,pit]", Std.string(tree.distanceSearch("min", 2)));
-		assertEquals("[an,in]", Std.string(tree.distanceSearch("io", 5)));
-		assertEquals("[an,in]", Std.string(tree.distanceSearch("_n", 1)));
+		assertTrue(tree.hammingSearch("", 3).length == 0);
+		assertEquals("[]", Std.string(tree.hammingSearch("min", 0)));
+		assertEquals("[pin]", Std.string(tree.hammingSearch("pin", 0)));
+		assertEquals("[fin,gin,pin]", Std.string(tree.hammingSearch("min", 1)));
+		assertEquals("[fin,gin,inn,pin,pit]", Std.string(tree.hammingSearch("min", 2)));
+		assertEquals("[an,in]", Std.string(tree.hammingSearch("io", 5)));
+		assertEquals("[an,in]", Std.string(tree.hammingSearch("_n", 1)));
+	}
+	
+	public function testLevenshteinSearch():Void 
+	{
+		assertTrue(tree.levenshteinSearch("", 3).length == 0);
+		assertEquals("[]", Std.string(tree.levenshteinSearch("min", 0)));
+		assertEquals("[pin]", Std.string(tree.levenshteinSearch("pin", 0)));
+		assertEquals("[fin,gin,in,pin]", Std.string(tree.levenshteinSearch("min", 1)));
+		assertEquals("[an,fin,gin,in,inn,pin,pint,pit]", Std.string(tree.levenshteinSearch("min", 2)));
+		assertEquals("[an,in]", Std.string(tree.levenshteinSearch("n", 1)));
 	}
 	
 	public function testSortedOrder():Void 
@@ -126,9 +136,9 @@ class Tests extends TestCase
 		assertTrue(currTree.numNodes == unserializedTree.numNodes);
 	}
 	
+	/*
 	public function testPrevNext():Void 
 	{
-		/*
 		assertEquals(null, tree.prevOf(""));
 		assertEquals(null, tree.prevOf("pony"));
 		assertEquals(null, tree.prevOf("John"));
@@ -142,10 +152,9 @@ class Tests extends TestCase
 		assertEquals("pit", tree.nextOf("pint"));
 		
 		for (k in dict) trace(k + " -> " + tree.nextOf(k));
-		*/
 		//tree.nextOf("John");
-
 	}
+	*/
 	
 	static public function run():Void 
 	{

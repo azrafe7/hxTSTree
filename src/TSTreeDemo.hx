@@ -31,6 +31,11 @@ using StringTools;
  */
 class TSTreeDemo extends Sprite {
 	
+	inline static var BOX_WIDTH:Int = 150;
+	inline static var BOX_GAP:Int = 10;
+	inline static var START_X:Int = 10;
+	inline static var START_Y:Int = 50;
+	
 	var fps:FPS;
 	var statsText:TextField;
 	var perfText:TextField;
@@ -40,11 +45,13 @@ class TSTreeDemo extends Sprite {
 	var prefixBox:TextBox;
 	var patternBox:TextBox;
 	var hasKeyBox:TextBox;
-	var distanceBox:TextBox;
+	var hammingBox:TextBox;
+	var levenshteinBox:TextBox;
 
 	var tree:TSTree<String>;
 	var dictWords:Array<String>;
-	var distance:Int = 2;
+	var hammingDistance:Int = 2;
+	var levenshteinDistance:Int = 2;
 	
 	public function new()
 	{
@@ -54,32 +61,37 @@ class TSTreeDemo extends Sprite {
 		
 		tree = new TSTree<String>();
 		
-		dictInfo = TextBox.getTextField("", 150, 0);
+		dictInfo = TextBox.getTextField("", getXForBox(1), 0);
 		addChild(dictInfo);
 		loadDictionary();
 		
 		perfText = TextBox.getTextField("", 0, stage.stageHeight - 18);
 		addChild(perfText);
 		
-		hasKeyBox = new TextBox("hasKey", 50, 50, 0, onHasKeyChange);
+		hasKeyBox = new TextBox("hasKey", getXForBox(0), START_Y, 0, onHasKeyChange);
 		hasKeyBox.text = "well";
 		onHasKeyChange();
 		addChild(hasKeyBox);
 		
-		prefixBox = new TextBox("prefix", 200, 50, 15, onPrefixChange);
+		prefixBox = new TextBox("prefix", getXForBox(1), START_Y, 15, onPrefixChange);
 		prefixBox.text = "war";
 		onPrefixChange();
 		addChild(prefixBox);
 		
-		patternBox = new TextBox("pattern", 350, 50, 15, onPatternChange);
+		patternBox = new TextBox("pattern", getXForBox(2), START_Y, 15, onPatternChange);
 		patternBox.text = "w...d";
 		onPatternChange();
 		addChild(patternBox);
 		
-		distanceBox = new TextBox('distance ($distance)', 500, 50, 15, onDistanceChange);
-		distanceBox.text = "world";
-		onDistanceChange();
-		addChild(distanceBox);
+		hammingBox = new TextBox('hamming ($hammingDistance)', getXForBox(3), START_Y, 15, onHammingDistanceChange);
+		hammingBox.text = "world";
+		onHammingDistanceChange();
+		addChild(hammingBox);
+		
+		levenshteinBox = new TextBox('levenshtein ($levenshteinDistance)', getXForBox(4), START_Y, 15, onLevenshteinDistanceChange);
+		levenshteinBox.text = "world";
+		onLevenshteinDistanceChange();
+		addChild(levenshteinBox);
 		
 		
 		fps = new FPS(0, 0, 0xFFFFFF);
@@ -198,21 +210,38 @@ class TSTreeDemo extends Sprite {
 		patternBox.results = results;
 	}
 	
-	public function onDistanceChange(?e:Event):Void 
+	public function onHammingDistanceChange(?e:Event):Void 
 	{
 		stopWatch();
-		var results = tree.distanceSearch(distanceBox.text, distance);
+		var results = tree.hammingSearch(hammingBox.text, hammingDistance);
 		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
-		distanceBox.results = results;
+		hammingBox.results = results;
+	}
+	
+	public function onLevenshteinDistanceChange(?e:Event):Void 
+	{
+		stopWatch();
+		var results = tree.levenshteinSearch(levenshteinBox.text, levenshteinDistance);
+		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
+		levenshteinBox.results = results;
 	}
 	
 	public function changeHammingDistance(newDistance:Int):Void 
 	{
-		if (newDistance < 0) distance = 0;
-		else if (newDistance > 5) distance = 5;
-		else distance = newDistance;
-		distanceBox.label = 'distance ($distance)';
-		onDistanceChange();
+		if (newDistance < 0) hammingDistance = 0;
+		else if (newDistance > 5) hammingDistance = 5;
+		else hammingDistance = newDistance;
+		hammingBox.label = 'hamming ($hammingDistance)';
+		onHammingDistanceChange();
+	}
+	
+	public function changeLevenshteinDistance(newDistance:Int):Void 
+	{
+		if (newDistance < 0) levenshteinDistance = 0;
+		else if (newDistance > 5) levenshteinDistance = 5;
+		else levenshteinDistance = newDistance;
+		levenshteinBox.label = 'levenshtein ($levenshteinDistance)';
+		onLevenshteinDistanceChange();
 	}
 	
 	public function onEnterFrame(e:Event):Void 
@@ -226,9 +255,17 @@ class TSTreeDemo extends Sprite {
 		if (e.keyCode == 27) {	// ESC
 			quit();
 		} else if (e.keyCode == 38) {	// UP
-			changeHammingDistance(distance + 1);
+			if (e.shiftKey) {
+				changeLevenshteinDistance(levenshteinDistance + 1);
+			} else {
+				changeHammingDistance(hammingDistance + 1);
+			}
 		} else if (e.keyCode == 40) {	// DOWN
-			changeHammingDistance(distance - 1);
+			if (e.shiftKey) {
+				changeLevenshteinDistance(levenshteinDistance - 1);
+			} else {
+				changeHammingDistance(hammingDistance - 1);
+			}
 		}
 	}
 	
@@ -246,6 +283,11 @@ class TSTreeDemo extends Sprite {
 	#else
 		Sys.exit(1);
 	#end
+	}
+	
+	public function getXForBox(n:Int):Float 
+	{
+		return START_X + (n * (BOX_WIDTH + BOX_GAP));
 	}
 	
 	static public inline function toFixed(num:Float, precision:Int):Float
