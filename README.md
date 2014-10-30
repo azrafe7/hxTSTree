@@ -3,7 +3,7 @@ hxTSTree
 
 A [Ternary Search Tree](http://en.wikipedia.org/wiki/Ternary_search_tree) in Haxe 3.1+.
 
-![](screenshot.png)
+[![demo](screenshot.png)](https://dl.dropboxusercontent.com/u/32864004/dev/FPDemo/hxTSTreeDemo.swf)
 
 [online swf demo](https://dl.dropboxusercontent.com/u/32864004/dev/FPDemo/hxTSTreeDemo.swf)
 
@@ -23,17 +23,17 @@ Based on Dr. Dobbs article ([http://www.drdobbs.com/database/ternary-search-tree
 
 **TSTree.bulkInsert() - sequential**
 
-[![](bulkInsert.png)](raw/master/bulkInsert.png)
+[![](bulkInsert.png)](https://github.com/azrafe7/hxTSTree/raw/master/bulkInsert.png)
 
 
 **TSTree.randomBulkInsert() - random**
 
-[![](randomBulkInsert.png)](raw/master/randomBulkInsert.png)
+[![](randomBulkInsert.png)](https://github.com/azrafe7/hxTSTree/raw/master/randomBulkInsert.png)
 
 
 **TSTree.balancedBulkInsert() - balanced**
 
-[![](balancedBulkInsert.png)](raw/master/balancedBulkInsert.png)
+[![](balancedBulkInsert.png)](https://github.com/azrafe7/hxTSTree/raw/master/balancedBulkInsert.png)
 
 
 ## References
