@@ -18,21 +18,32 @@ Based on Dr. Dobbs article ([http://www.drdobbs.com/database/ternary-search-tree
  - Returned keys (/data) are given in sorted order
  - DOT format file writer (for visualization with tools like [Graphviz](http://www.graphviz.org/)) 
 
+
 ## Internal representation (with [`fruit.txt`](assets/fruit.txt) word list)
 
 **TSTree.bulkInsert() - sequential**
 
-![](bulkInsert.png)
+[![](bulkInsert.png)](raw/master/bulkInsert.png)
 
 
 **TSTree.randomBulkInsert() - random**
 
-![](randomBulkInsert.png)
+[![](randomBulkInsert.png)](raw/master/randomBulkInsert.png)
 
 
 **TSTree.balancedBulkInsert() - balanced**
 
-![](balancedBulkInsert.png)
+[![](balancedBulkInsert.png)](raw/master/balancedBulkInsert.png)
+
+
+## References
+
+ - [http://www.drdobbs.com/database/ternary-search-trees/184410528](http://www.drdobbs.com/database/ternary-search-trees/184410528)
+ - [http://en.wikipedia.org/wiki/Hamming_distance](http://en.wikipedia.org/wiki/Hamming_distance)
+ - [http://en.wikipedia.org/wiki/Levenshtein_distance](http://en.wikipedia.org/wiki/Levenshtein_distance)
+ - [http://stevehanov.ca/blog/index.php?id=114](http://stevehanov.ca/blog/index.php?id=114)
+ - [http://www.let.rug.nl/kleiweg/lev/](http://www.let.rug.nl/kleiweg/lev/)
+
 
 ## License
 
