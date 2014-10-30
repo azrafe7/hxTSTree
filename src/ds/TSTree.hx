@@ -449,9 +449,10 @@ class TSTree<T>
 	 * 
 	 * Relies on haxe.Serializer, so all its restrictions also apply.
 	 */
-	public function serialize():String
+	public function serialize(useCache:Bool = false):String
 	{
 		var serializer = new Serializer();
+		serializer.useCache = useCache;
 		serializer.serialize(numNodes);
 		serializer.serialize(numKeys);
 		var keyDataPairs = getAll();
