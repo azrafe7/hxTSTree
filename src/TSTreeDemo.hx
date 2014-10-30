@@ -40,7 +40,7 @@ class TSTreeDemo extends Sprite {
 	var statsText:TextField;
 	var perfText:TextField;
 	var dictInfo:TextField;
-	var time:Float = 0;
+	static var time:Float = 0;
 	
 	var prefixBox:TextBox;
 	var patternBox:TextBox;
@@ -269,7 +269,7 @@ class TSTreeDemo extends Sprite {
 		}
 	}
 	
-	public function stopWatch():Float 
+	static public function stopWatch():Float 
 	{
 		var delta = Timer.stamp() - time;
 		time = Timer.stamp();

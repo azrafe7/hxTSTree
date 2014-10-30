@@ -14,7 +14,8 @@ import haxe.Unserializer;
 using StringTools;
 
 /**
- * ...
+ * Test suite for TSTree.
+ * 
  * @author azrafe7
  */
 class Tests extends TestCase
@@ -155,6 +156,43 @@ class Tests extends TestCase
 		//tree.nextOf("John");
 	}
 	*/
+	
+/* // uncomment this to test optimized dict loading (150k) on cpp
+#if cpp
+	public function testOptimizedDict():Void 
+	{
+		var tmpTree = tree;
+		
+		tree.clear();
+		
+		// load 150k words ~normally from file
+		TSTreeDemo.stopWatch();
+		var dictPath:String = "assets/dict_twl06.txt";
+		var dictText:String = sys.io.File.getContent("../../../../" + dictPath);
+		var dictWords = dictText.split("\r\n");
+		
+		tree.balancedBulkInsert(dictWords, dictWords, false);	// note that this is balancedBulkInsert(...)
+		var normalLoadTime = TSTreeDemo.stopWatch();
+		
+		// write balanced dict
+		tree.writeOptimizedDict("../../../../" + dictPath, "load_optimized_dict.txt");
+		tree.clear();
+		
+		// load 150k words from optimized dict file
+		TSTreeDemo.stopWatch();
+		dictPath = "load_optimized_dict.txt";
+		dictText = sys.io.File.getContent(dictPath);
+		dictWords = dictText.split("\r\n");
+		tree.bulkInsert(dictWords, dictWords);	// note that this is bulkInsert(...)
+		var optimizedLoadTime = TSTreeDemo.stopWatch();
+		
+		assertTrue(optimizedLoadTime < normalLoadTime);
+		trace("\nnormal: " + normalLoadTime + "s vs optimized: " + optimizedLoadTime + 's (${TSTreeDemo.toFixed((normalLoadTime / optimizedLoadTime) * 100, 2)}% faster) ');
+		
+		tree = tmpTree;
+	}
+#end
+*/
 	
 	static public function run():Void 
 	{

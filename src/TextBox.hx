@@ -1,4 +1,5 @@
 package ;
+
 import openfl.display.Sprite;
 import openfl.events.Event;
 import openfl.events.MouseEvent;
@@ -10,7 +11,8 @@ import openfl.text.TextFormat;
 import openfl.text.TextFormatAlign;
 
 /**
- * ...
+ * Helper class acting as a TextField with label and results.
+ * 
  * @author azrafe7
  */
 class TextBox extends Sprite
