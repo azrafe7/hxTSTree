@@ -282,7 +282,6 @@ class TSTree<T>
 		if (results == null) results = [];
 		if (key == null || key.length == 0) return results;
 		if (distance < 0) distance = 0;
-		if (distance > key.length) distance = key.length;
 		
 		var currentRow = [for (i in 0...key.length + 1) i];
 		return _levenshteinSearch(root, key, currentRow, distance, results);
@@ -415,7 +414,7 @@ class TSTree<T>
 
 	/** 
 	 * Reads the keys from `inputFile` (one key per line) and rewrites them
-	 * to `outputFile` in optimized order for loaing with bulkInsert().
+	 * to `outputFile` in optimized order for loading with bulkInsert().
 	 */
 	public function writeOptimizedDict(inputFile:String, outputFile:String, newLine:String = "\r\n"):Void 
 	{
@@ -715,6 +714,11 @@ class TSTree<T>
 		return results;
 	}
 	
+	/** 
+	 * Thanks to Steve Hanov for a fast way of doing this.
+	 * 
+	 * @see http://stevehanov.ca/blog/index.php?id=114 
+	 */
 	function _levenshteinSearch(node:Node<T>, key:String, previousRow:Array<Int>, distance:Int, results:Array<String>, idx:Int = 0, prevMinCost:Int = 0):Array<String>
 	{
 		if (node == null || distance < 0 || maxResults <= 0) return results;
@@ -728,7 +732,6 @@ class TSTree<T>
 		if ((prevMinCost <= distance || char < splitChar) && node.loKid != null) {
 			_levenshteinSearch(node.loKid, key, previousRow, distance, results, idx, prevMinCost);
 		}
-		
 		if (node.eqKid != null || node.isKey) {
 			
 			// calc currentRow of Levenshtein distances
@@ -760,7 +763,6 @@ class TSTree<T>
 				_levenshteinSearch(node.eqKid, key, currentRow, distance, results, idx + 1, minCost);
 			}
 		}
-		
 		if ((prevMinCost <= distance || char > splitChar) && node.hiKid != null) {
 			_levenshteinSearch(node.hiKid, key, previousRow, distance, results, idx, prevMinCost);
 		}
