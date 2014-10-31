@@ -157,7 +157,7 @@ class Tests extends TestCase
 	}
 	*/
 	
-/* // uncomment this to test optimized dict loading (150k) on cpp
+/* // Uncomment this to test optimized dict loading (150k) on cpp
 #if cpp
 	public function testOptimizedDict():Void 
 	{

@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2014 Giuseppe Di Mauro (azrafe7)
+ * 
+ * This file is part of hxTSTree lib (https://github.com/azrafe7/hxTSTree) and released under the MIT license.
+ * See the LICENSE file (https://github.com/azrafe7/hxTSTree/blob/master/LICENSE) for details.
+ */
+
 package ds;
 
 import haxe.ds.ArraySort;
