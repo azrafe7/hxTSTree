@@ -42,11 +42,13 @@ class TSTreeDemo extends Sprite {
 	var dictInfo:TextField;
 	static var time:Float = 0;
 	
+	var hasKeyBox:TextBox;
 	var prefixBox:TextBox;
 	var patternBox:TextBox;
-	var hasKeyBox:TextBox;
 	var hammingBox:TextBox;
 	var levenshteinBox:TextBox;
+	var prevKeyBox:TextBox;
+	var nextKeyBox:TextBox;
 
 	var tree:TSTree<String>;
 	var dictWords:Array<String>;
@@ -93,6 +95,16 @@ class TSTreeDemo extends Sprite {
 		onLevenshteinDistanceChange();
 		addChild(levenshteinBox);
 		
+		prevKeyBox = new TextBox("prevKey", getXForBox(0), START_Y + 80, 0, onPrevKeyChange);
+		prevKeyBox.text = "warden";
+		onPrevKeyChange();
+		addChild(prevKeyBox);
+		
+		nextKeyBox = new TextBox("nextKey", getXForBox(0), START_Y + 160, 0, onNextKeyChange);
+		nextKeyBox.text = "warden";
+		onNextKeyChange();
+		addChild(nextKeyBox);
+		
 		
 		fps = new FPS(0, 0, 0xFFFFFF);
 		fps.visible = false;
@@ -111,7 +123,8 @@ class TSTreeDemo extends Sprite {
 		
 		stopWatch();
 		var dictPath:String = "assets/dict_25k.txt";
-		var isSerialized = dictPath.indexOf("serialized_") >= 0;	
+		var isSerialized = dictPath.indexOf("serialized_") >= 0;
+		var isOptimized = dictPath.indexOf("optimized_") >= 0;
 	#if sys	
 		var dictText:String = sys.io.File.getContent("../../../../" + dictPath);
 	#else
@@ -126,9 +139,13 @@ class TSTreeDemo extends Sprite {
 			/*for (word in dictWords) {
 				tree.insert(word, word);
 			}*/
-			//tree.bulkInsert(dictWords, dictWords);
-			//tree.randomBulkInsert(dictWords, dictWords);
-			tree.balancedBulkInsert(dictWords, dictWords, false);
+			if (isOptimized) {
+				tree.bulkInsert(dictWords, dictWords);
+			} else {
+				//tree.bulkInsert(dictWords, dictWords);
+				//tree.randomBulkInsert(dictWords, dictWords);
+				tree.balancedBulkInsert(dictWords, dictWords, false);
+			}
 			//trace(tree.getBalancedIndices(dictWords));
 		} else {
 			tree = TSTree.unserialize(dictText);
@@ -192,6 +209,22 @@ class TSTreeDemo extends Sprite {
 		var result = tree.hasKey(hasKeyBox.text);
 		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
 		hasKeyBox.results = [Std.string(result)];
+	}
+	
+	public function onPrevKeyChange(?e:Event):Void 
+	{
+		stopWatch();
+		var result = tree.prevOf(prevKeyBox.text, false);
+		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
+		prevKeyBox.results = [Std.string(result)];
+	}
+	
+	public function onNextKeyChange(?e:Event):Void 
+	{
+		stopWatch();
+		var result = tree.nextOf(nextKeyBox.text, false);
+		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
+		nextKeyBox.results = [Std.string(result)];
 	}
 	
 	public function onPrefixChange(?e:Event):Void 

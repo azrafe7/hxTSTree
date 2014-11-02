@@ -82,16 +82,15 @@ class TSTree<T>
 			indices[rndIdx] = tmp;
 		}
 		
-		for (i in 0...indices.length) {
-			var idx = indices[i];
-			insert(keys[idx], values != null ? values[idx] : null);
+		for (i in indices) {
+			_insert(keys[i], values != null ? values[i] : null);
 		}
 	}
 	
 	/** 
 	 * Inserts key-value pairs in balanced order.
 	 * 
-	 * @param isSorted	if `false` the keys will be sorted first (not in place).
+	 * @param isSorted	If `false` the keys will be sorted first (not in place).
 	 */
 	public function balancedBulkInsert(keys:Array<String>, ?values:Array<T>, isSorted:Bool = false):Void 
 	{
@@ -110,7 +109,7 @@ class TSTree<T>
 		
 		var sequence = getBalancedIndices(indices.length);
 		for (i in sequence) {
-			insert(keys[indices[i]], values != null ? values[indices[i]] : null);
+			_insert(keys[indices[i]], values != null ? values[indices[i]] : null);
 		}
 	}
 	
@@ -498,6 +497,70 @@ class TSTree<T>
 	public function isEmpty():Bool
 	{
 		return root == null;
+	}
+	
+	/** 
+	 * Finds the the predecessor of `key`.
+	 * 
+	 * @param keyMustExist	If `false` it won't be ensured that `key` is already present in the tree.
+	 */ 
+	public function prevOf(key:String, keyMustExist:Bool = true):String
+	{
+		var result:String = null;
+		var prevKey:String = null;
+		var done:Bool = false;
+		examinedNodes = 0;
+		
+		traverse(root, function callback(node:Node<T>):Void 
+		{
+			examinedNodes++;
+			if (done) return;
+			if (node.isKey) {
+				if (node.key >= key) {
+					if (!keyMustExist || (keyMustExist && node.key == key)) {
+						result = prevKey;
+					}
+					done = true;
+				}
+				if (prevKey < key || prevKey == null) {
+					prevKey = node.key;
+				}
+			}
+		});
+		
+		return result;
+	}
+	
+	/** 
+	 * Finds the the successor of `key`.
+	 * 
+	 * @param keyMustExist	If `false` it won't be ensured that `key` is already present in the tree.
+	 */ 
+	public function nextOf(key:String, keyMustExist:Bool = true):String
+	{
+		var result:String = null;
+		var prevKey:String = null;
+		var done:Bool = false;
+		examinedNodes = 0;
+		
+		traverse(root, function callback(node:Node<T>):Void 
+		{
+			examinedNodes++;
+			if (done) return;
+			if (node.isKey) {
+				if (node.key > key) {
+					if (!keyMustExist || (keyMustExist && prevKey == key)) {
+						result = node.key;
+					}
+					done = true;
+				}
+				if (prevKey <= key || prevKey == null) {
+					prevKey = node.key;
+				}
+			}
+		});
+		
+		return result;
 	}
 	
 	/** In-order tree traversal (callback will be called on every encountered node). */
