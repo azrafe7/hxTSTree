@@ -21,7 +21,10 @@ using StringTools;
 class Tests extends TestCase
 {
 
-	var dict = ["in", "John", "gin", "inn", "pin", "longjohn", "apple", "fin", "pint", "inner", "an", "pit"];
+	var dict = ["in", "John", "Josh", "Jack", "gin", "inn", "inside", "anagram", "pinkie", "pinkish", "inch", 
+				"pink", "inc", "git", "gig", "ant", "giant", "punk", "fun", "pin", "longjohn", "apple", "fin", 
+				"pint", "inner", "an", "and", "anarchy", "pit", "pity", "pinch"];
+	
 	var tree:TSTree<String>;
 	
 	
@@ -34,6 +37,8 @@ class Tests extends TestCase
 		
 		tree.clear();
 		tree.balancedBulkInsert(dict, dict);
+		
+		trace("sorted dict: " + tree.getAllKeys());
 		
 	#if sys
 		tree.writeDotFile("test_dict.dot");
@@ -63,7 +68,7 @@ class Tests extends TestCase
 	{
 		assertTrue(tree.getDataFor("John") == "John");
 		assertTrue(tree.getDataFor("") == null);
-		assertTrue(tree.getDataFor("pity") == null);
+		assertTrue(tree.getDataFor("pitbull") == null);
 		assertTrue(tree.getDataFor("pit") == "pit");
 		assertTrue(tree.getDataFor("in") == "in");
 		tree.insert("in", "overwritten");
@@ -73,8 +78,8 @@ class Tests extends TestCase
 	public function testPrefixSearch():Void 
 	{
 		assertTrue(tree.prefixSearch("").length == 0);
-		assertEquals("[pin,pint,pit]", Std.string(tree.prefixSearch("p")));
-		assertEquals("[in,inn,inner]", Std.string(tree.prefixSearch("in")));
+		assertEquals("[pin,pinch,pink,pinkie,pinkish,pint,pit,pity,punk]", Std.string(tree.prefixSearch("p")));
+		assertEquals("[in,inc,inch,inn,inner,inside]", Std.string(tree.prefixSearch("in")));
 	}
 	
 	public function testPatternSearch():Void 
@@ -90,7 +95,7 @@ class Tests extends TestCase
 		assertEquals("[]", Std.string(tree.hammingSearch("min", 0)));
 		assertEquals("[pin]", Std.string(tree.hammingSearch("pin", 0)));
 		assertEquals("[fin,gin,pin]", Std.string(tree.hammingSearch("min", 1)));
-		assertEquals("[fin,gin,inn,pin,pit]", Std.string(tree.hammingSearch("min", 2)));
+		assertEquals("[fin,fun,gig,gin,git,inn,pin,pit]", Std.string(tree.hammingSearch("min", 2)));
 		assertEquals("[an,in]", Std.string(tree.hammingSearch("io", 5)));
 		assertEquals("[an,in]", Std.string(tree.hammingSearch("_n", 1)));
 	}
@@ -101,7 +106,7 @@ class Tests extends TestCase
 		assertEquals("[]", Std.string(tree.levenshteinSearch("min", 0)));
 		assertEquals("[pin]", Std.string(tree.levenshteinSearch("pin", 0)));
 		assertEquals("[fin,gin,in,pin]", Std.string(tree.levenshteinSearch("min", 1)));
-		assertEquals("[an,fin,gin,in,inn,pin,pint,pit]", Std.string(tree.levenshteinSearch("min", 2)));
+		assertEquals("[an,fin,fun,gig,gin,git,in,inc,inn,pin,pink,pint,pit]", Std.string(tree.levenshteinSearch("min", 2)));
 		assertEquals("[an,in]", Std.string(tree.levenshteinSearch("n", 1)));
 	}
 	
@@ -139,15 +144,22 @@ class Tests extends TestCase
 	
 	public function testPrevNext():Void 
 	{
-		assertEquals(null, tree.prevOf(""));
-		assertEquals(null, tree.prevOf("pony"));
-		assertEquals(null, tree.prevOf("John"));
-		assertEquals("pin", tree.prevOf("pint"));
-		
 		assertEquals(null, tree.nextOf(""));
 		assertEquals(null, tree.nextOf("pony"));
-		assertEquals(null, tree.nextOf("pit"));
+		assertEquals("pity", tree.nextOf("pit"));
 		assertEquals("pit", tree.nextOf("pint"));
+		assertEquals("fin", tree.nextOf("apple"));
+		assertEquals("Jack", tree.nextOf("", false));
+		assertEquals("longjohn", tree.nextOf("long", false));
+		
+		assertEquals(null, tree.prevOf(""));
+		assertEquals(null, tree.prevOf("pony"));
+		assertEquals(null, tree.prevOf("Jack"));
+		assertEquals("Jack", tree.prevOf("John"));
+		assertEquals("pinkie", tree.prevOf("pinkish"));
+		assertEquals("ant", tree.prevOf("apple"));
+		assertEquals("Josh", tree.prevOf("alt", false));
+		assertEquals("punk", tree.prevOf("zzzzz", false));
 	}
 	
 /* // Uncomment this to test optimized dict loading (150k) on cpp
