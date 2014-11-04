@@ -1,0 +1,7 @@
+-cp src/
+-main TSTreeDemo
+-swf-version 11.2
+-swf-header 800:400:60:101010
+-swf bin/TSTreeDemo.swf
+-D fdb
+-debug

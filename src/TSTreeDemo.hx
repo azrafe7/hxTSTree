@@ -5,19 +5,21 @@ import haxe.Serializer;
 import haxe.Timer;
 import haxe.unit.TestCase;
 import haxe.Unserializer;
+#if openfl
 import openfl.Assets;
 import openfl.display.FPS;
-import openfl.display.Sprite;
-import openfl.events.Event;
-import openfl.events.KeyboardEvent;
-import openfl.filters.GlowFilter;
-import openfl.system.System;
+#end
+import flash.display.Sprite;
+import flash.events.Event;
+import flash.events.KeyboardEvent;
+import flash.filters.GlowFilter;
+import flash.system.System;
+import flash.text.TextField;
+import flash.text.TextFieldAutoSize;
+import flash.text.TextFieldType;
+import flash.text.TextFormat;
+import flash.text.TextFormatAlign;
 import ds.TSTree;
-import openfl.text.TextField;
-import openfl.text.TextFieldAutoSize;
-import openfl.text.TextFieldType;
-import openfl.text.TextFormat;
-import openfl.text.TextFormatAlign;
 #if sys
 import sys.io.File;
 #end
@@ -26,6 +28,7 @@ using StringTools;
 
 
 /**
+ * TSTreeDemo.
  * 
  * @author azrafe7
  */
@@ -37,7 +40,9 @@ class TSTreeDemo extends Sprite {
 	inline static var START_X:Int = 10;
 	inline static var START_Y:Int = 50;
 	
+#if openfl
 	var fps:FPS;
+#end
 	var statsText:TextField;
 	var perfText:TextField;
 	var dictInfo:TextField;
@@ -68,7 +73,7 @@ class TSTreeDemo extends Sprite {
 		addChild(dictInfo);
 		loadDictionary();
 		
-		perfText = TextBox.getTextField("", 0, stage.stageHeight - 18);
+		perfText = TextBox.getTextField("", 0, flash.Lib.current.stage.stageHeight - 18);
 		addChild(perfText);
 		
 		hasKeyBox = new TextBox("hasKey", getXForBox(0), START_Y, 0, onHasKeyChange);
@@ -107,13 +112,15 @@ class TSTreeDemo extends Sprite {
 		addChild(nextKeyBox);
 		
 		
+	#if openfl
 		fps = new FPS(0, 0, 0xFFFFFF);
 		fps.visible = false;
-		statsText = TextBox.getTextField("prefixResults", 0, 0);
+	#end
+		statsText = TextBox.getTextField("", 0, 0);
 		addChild(statsText);
 		
-		stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
-		stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+		flash.Lib.current.stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
+		flash.Lib.current.stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 		
 		//quit();
 	}
@@ -281,7 +288,11 @@ class TSTreeDemo extends Sprite {
 	public function onEnterFrame(e:Event):Void 
 	{
 		var mem = toFixed(System.totalMemory / 1024 / 1024, 2);
+	#if openfl
 		statsText.text = 'FPS: ${fps.currentFPS} MEM: $mem';
+	#else
+		statsText.text = 'MEM: $mem';
+	#end
 	}
 	
 	public function onKeyDown(e:KeyboardEvent):Void 
@@ -329,4 +340,11 @@ class TSTreeDemo extends Sprite {
 		var exp:Float = Math.pow(10, precision);
 		return Math.round(num * exp) / exp;
 	}
+	
+#if !openfl
+	static public function main():Void 
+	{
+		flash.Lib.current.addChild(new TSTreeDemo());
+	}
+#end
 }

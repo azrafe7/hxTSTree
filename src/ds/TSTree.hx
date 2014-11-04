@@ -496,7 +496,9 @@ class TSTree<T>
 	/** Checks if the tree is empty. */
 	public function isEmpty():Bool
 	{
-		return root == null;
+		if (root == null) return true;
+		
+		return getAllKeys().length == 0;
 	}
 	
 	/** 

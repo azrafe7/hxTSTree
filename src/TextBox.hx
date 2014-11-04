@@ -1,14 +1,14 @@
 package ;
 
-import openfl.display.Sprite;
-import openfl.events.Event;
-import openfl.events.MouseEvent;
-import openfl.filters.GlowFilter;
-import openfl.text.TextField;
-import openfl.text.TextFieldAutoSize;
-import openfl.text.TextFieldType;
-import openfl.text.TextFormat;
-import openfl.text.TextFormatAlign;
+import flash.display.Sprite;
+import flash.events.Event;
+import flash.events.MouseEvent;
+import flash.filters.GlowFilter;
+import flash.text.TextField;
+import flash.text.TextFieldAutoSize;
+import flash.text.TextFieldType;
+import flash.text.TextFormat;
+import flash.text.TextFormatAlign;
 
 /**
  * Helper class acting as a TextField with label and results.

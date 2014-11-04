@@ -3,7 +3,7 @@ hxTSTree
 
 A [Ternary Search Tree](http://en.wikipedia.org/wiki/Ternary_search_tree) in Haxe 3.1+.
 
-[![demo](screenshot.png)](https://dl.dropboxusercontent.com/u/32864004/dev/FPDemo/hxTSTreeDemo.swf)
+[![demo](screenshots/screenshot.png)](https://dl.dropboxusercontent.com/u/32864004/dev/FPDemo/hxTSTreeDemo.swf)
 
 [online swf demo](https://dl.dropboxusercontent.com/u/32864004/dev/FPDemo/hxTSTreeDemo.swf)
 
@@ -23,17 +23,17 @@ Based on Dr. Dobbs article ([http://www.drdobbs.com/database/ternary-search-tree
 
 **TSTree.bulkInsert() - sequential**
 
-[![](bulkInsert.png)](https://github.com/azrafe7/hxTSTree/raw/master/bulkInsert.png)
+[![](screenshots/bulkInsert.png)](https://github.com/azrafe7/hxTSTree/raw/master/bulkInsert.png)
 
 
 **TSTree.randomBulkInsert() - random**
 
-[![](randomBulkInsert.png)](https://github.com/azrafe7/hxTSTree/raw/master/randomBulkInsert.png)
+[![](screenshots/randomBulkInsert.png)](https://github.com/azrafe7/hxTSTree/raw/master/randomBulkInsert.png)
 
 
 **TSTree.balancedBulkInsert() - balanced**
 
-[![](balancedBulkInsert.png)](https://github.com/azrafe7/hxTSTree/raw/master/balancedBulkInsert.png)
+[![](screenshots/balancedBulkInsert.png)](https://github.com/azrafe7/hxTSTree/raw/master/balancedBulkInsert.png)
 
 
 ## References

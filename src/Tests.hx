@@ -161,6 +161,20 @@ class Tests extends TestCase
 		assertEquals("punk", tree.prevOf("zzzzz"));
 	}
 	
+	public function testEmpty():Void 
+	{
+		for (k in dict) tree.remove(k);
+		assertTrue(tree.isEmpty());
+		tree.balancedBulkInsert(dict, dict);
+	}
+	
+	public function testClear():Void 
+	{
+		tree.clear();
+		assertTrue(tree.isEmpty());
+		tree.balancedBulkInsert(dict, dict);
+	}
+	
 /* // Uncomment this to test optimized dict loading (150k) on cpp
 #if cpp
 	public function testOptimizedDict():Void 
