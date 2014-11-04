@@ -18,12 +18,13 @@ using StringTools;
  * 
  * @author azrafe7
  */
+@:access(ds.TSTree)
 class Tests extends TestCase
 {
 
-	var dict = ["in", "John", "Josh", "Jack", "gin", "inn", "inside", "anagram", "pinkie", "pinkish", "inch", 
-				"pink", "inc", "git", "gig", "ant", "giant", "punk", "fun", "pin", "longjohn", "apple", "fin", 
-				"pint", "inner", "an", "and", "anarchy", "pit", "pity", "pinch"];
+	public static var dict = ["in", "John", "Josh", "Jack", "gin", "inn", "inside", "anagram", "pinkie", "pinkish", "inch", 
+							  "pink", "inc", "git", "gig", "ant", "giant", "punk", "fun", "pin", "longjohn", "apple", "fin", 
+							  "pint", "inner", "an", "and", "anarchy", "pit", "pity", "pinch"];
 	
 	var tree:TSTree<String>;
 	
@@ -38,7 +39,7 @@ class Tests extends TestCase
 		tree.clear();
 		tree.balancedBulkInsert(dict, dict);
 		
-		trace("sorted dict: " + tree.getAllKeys());
+		//trace("sorted dict: " + tree.getAllKeys());
 		
 	#if sys
 		tree.writeDotFile("test_dict.dot");
@@ -59,8 +60,7 @@ class Tests extends TestCase
 	{
 		assertFalse(tree.hasKey(""));
 		assertFalse(tree.hasKey("party"));
-		assertTrue(tree.hasKey("in"));
-		assertTrue(tree.hasKey("inn"));
+		for (k in dict) assertTrue(tree.hasKey(k));
 		assertFalse(tree.hasKey("john"));
 	}
 	
@@ -144,22 +144,21 @@ class Tests extends TestCase
 	
 	public function testPrevNext():Void 
 	{
-		assertEquals(null, tree.nextOf(""));
-		assertEquals(null, tree.nextOf("pony"));
+		assertEquals("punk", tree.nextOf("pony"));
 		assertEquals("pity", tree.nextOf("pit"));
 		assertEquals("pit", tree.nextOf("pint"));
 		assertEquals("fin", tree.nextOf("apple"));
-		assertEquals("Jack", tree.nextOf("", false));
-		assertEquals("longjohn", tree.nextOf("long", false));
+		assertEquals("Jack", tree.nextOf(""));
+		assertEquals("longjohn", tree.nextOf("long"));
 		
 		assertEquals(null, tree.prevOf(""));
-		assertEquals(null, tree.prevOf("pony"));
+		assertEquals("pity", tree.prevOf("pony"));
 		assertEquals(null, tree.prevOf("Jack"));
 		assertEquals("Jack", tree.prevOf("John"));
 		assertEquals("pinkie", tree.prevOf("pinkish"));
 		assertEquals("ant", tree.prevOf("apple"));
-		assertEquals("Josh", tree.prevOf("alt", false));
-		assertEquals("punk", tree.prevOf("zzzzz", false));
+		assertEquals("Josh", tree.prevOf("alt"));
+		assertEquals("punk", tree.prevOf("zzzzz"));
 	}
 	
 /* // Uncomment this to test optimized dict loading (150k) on cpp

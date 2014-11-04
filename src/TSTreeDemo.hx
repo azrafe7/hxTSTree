@@ -29,6 +29,7 @@ using StringTools;
  * 
  * @author azrafe7
  */
+@:access(ds.TSTree)
 class TSTreeDemo extends Sprite {
 	
 	inline static var BOX_WIDTH:Int = 150;
@@ -122,13 +123,13 @@ class TSTreeDemo extends Sprite {
 		tree.clear();
 		
 		stopWatch();
-		var dictPath:String = "assets/dict_25k.txt";
+		var dictPath:String = "assets/dict_350k.txt";
 		var isSerialized = dictPath.indexOf("serialized_") >= 0;
 		var isOptimized = dictPath.indexOf("optimized_") >= 0;
 	#if sys	
 		var dictText:String = sys.io.File.getContent("../../../../" + dictPath);
 	#else
-		var dictText:String = Macros.readFile("assets/dict_25k.txt");
+		var dictText:String = Macros.readFile("assets/dict_350k.txt");
 	#end
 		//var dictText = haxe.Resource.getString("dictionary");
 		if (!isSerialized) dictWords = dictText.split("\r\n");
@@ -214,7 +215,7 @@ class TSTreeDemo extends Sprite {
 	public function onPrevKeyChange(?e:Event):Void 
 	{
 		stopWatch();
-		var result = tree.prevOf(prevKeyBox.text, false);
+		var result = tree.prevOf(prevKeyBox.text);
 		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
 		prevKeyBox.results = [Std.string(result)];
 	}
@@ -222,7 +223,7 @@ class TSTreeDemo extends Sprite {
 	public function onNextKeyChange(?e:Event):Void 
 	{
 		stopWatch();
-		var result = tree.nextOf(nextKeyBox.text, false);
+		var result = tree.nextOf(nextKeyBox.text);
 		perfText.text = 'last search executed in ${stopWatch()}s (${tree.examinedNodes} nodes examined)';
 		nextKeyBox.results = [Std.string(result)];
 	}

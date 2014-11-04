@@ -500,66 +500,86 @@ class TSTree<T>
 	}
 	
 	/** 
-	 * Finds the the predecessor of `key`.
+	 * Finds the the predecessor of `key` (or null if it doesn't exist).
 	 * 
-	 * @param keyMustExist	If `false` it won't be ensured that `key` is already present in the tree.
+	 * Note that it won't be ensured that `key` is already present in the tree.
 	 */ 
-	public function prevOf(key:String, keyMustExist:Bool = true):String
+	public function prevOf(key:String):String
 	{
-		var result:String = null;
-		var prevKey:String = null;
-		var done:Bool = false;
 		examinedNodes = 0;
+		var result:String = null;
+		if (key == null || key.length < 1) return result;
+		var path = getPathTo(root, key);
 		
-		traverse(root, function callback(node:Node<T>):Void 
-		{
-			examinedNodes++;
-			if (done) return;
-			if (node.isKey) {
-				if (node.key >= key) {
-					if (!keyMustExist || (keyMustExist && node.key == key)) {
-						result = prevKey;
-					}
-					done = true;
-				}
-				if (prevKey < key || prevKey == null) {
-					prevKey = node.key;
-				}
+		var tempMaxResults = maxResults;
+		while (path.length > 0) {
+			var node = path.pop();
+			maxResults = MAX_INT;
+			var results = [];
+			// check eqKid's keys
+			getAllKeysFrom(node.eqKid, results);
+			if (results.length > 0 && results[results.length - 1] < key) {
+				result = results[results.length - 1];
+				break;
 			}
-		});
+			// check curr node key
+			if (node.isKey && node.key < key) {
+				result = node.key;
+				break;
+			}
+			maxResults = MAX_INT;
+			var results = [];
+			// check loKid's keys
+			getAllKeysFrom(node.loKid, results);
+			if (results.length > 0 && results[results.length - 1] < key) {
+				result = results[results.length - 1];
+				break;
+			}
+		}
 		
+		maxResults = tempMaxResults;
 		return result;
 	}
 	
 	/** 
-	 * Finds the the successor of `key`.
+	 * Finds the the successor of `key` (or null if it doesn't exist).
 	 * 
-	 * @param keyMustExist	If `false` it won't be ensured that `key` is already present in the tree.
+	 * Note that it won't be ensured that `key` is already present in the tree.
 	 */ 
-	public function nextOf(key:String, keyMustExist:Bool = true):String
+	public function nextOf(key:String):String
 	{
-		var result:String = null;
-		var prevKey:String = null;
-		var done:Bool = false;
 		examinedNodes = 0;
+		var result:String = null;
+		if (key == null) return result;
+		var path = getPathTo(root, key);
 		
-		traverse(root, function callback(node:Node<T>):Void 
-		{
-			examinedNodes++;
-			if (done) return;
-			if (node.isKey) {
-				if (node.key > key) {
-					if (!keyMustExist || (keyMustExist && prevKey == key)) {
-						result = node.key;
-					}
-					done = true;
-				}
-				if (prevKey <= key || prevKey == null) {
-					prevKey = node.key;
-				}
+		var tempMaxResults = maxResults;
+		while (path.length > 0) {
+			var node = path.pop();
+			// check curr node key
+			if (node.isKey && node.key > key) {
+				result = node.key;
+				break;
 			}
-		});
+			maxResults = 1;
+			var results = [];
+			// check eqKid's first key
+			getAllKeysFrom(node.eqKid, results);
+			if (results.length > 0 && results[0] > key) {
+				result = results[0];
+				break;
+			}
+			maxResults = 1;
+			var results = [];
+			// check hiKid's first key
+			getAllKeysFrom(node.hiKid, results);
+			if (results.length > 0 && results[0] > key) {
+				result = results[0];
+				break;
+			}
+		}
 		
+		maxResults = tempMaxResults;
 		return result;
 	}
 	
@@ -699,6 +719,36 @@ class TSTree<T>
 		}
 		
 		return results;
+	}
+	
+	function getPathTo(startNode:Node<T>, key:String):Array<Node<T>>
+	{
+		var result = [];
+		var len = key.length;
+		var idx = 0;
+		var node:Node<T> = startNode;
+		while (node != null) {
+			var char = len > 0 ? key.charAt(idx) : "";
+			var splitChar = node.splitChar;
+			
+			examinedNodes++;
+			result.push(node);
+			
+			if (char < splitChar) {
+				node = node.loKid;
+			} else if (char == splitChar) {
+				if (idx == len - 1) {
+					node = null;
+				} else {
+					node = node.eqKid;
+				}
+				idx++;
+			} else {
+				node = node.hiKid;
+			}
+		}
+		
+		return result;
 	}
 	
 	function getAllKeysFrom(node:Node<T>, results:Array<String>):Array<String>
