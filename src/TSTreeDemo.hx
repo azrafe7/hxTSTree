@@ -123,13 +123,13 @@ class TSTreeDemo extends Sprite {
 		tree.clear();
 		
 		stopWatch();
-		var dictPath:String = "assets/dict_350k.txt";
+		var dictPath:String = "assets/dict_25k.txt";
 		var isSerialized = dictPath.indexOf("serialized_") >= 0;
 		var isOptimized = dictPath.indexOf("optimized_") >= 0;
 	#if sys	
 		var dictText:String = sys.io.File.getContent("../../../../" + dictPath);
 	#else
-		var dictText:String = Macros.readFile("assets/dict_350k.txt");
+		var dictText:String = Macros.readFile("assets/dict_25k.txt");
 	#end
 		//var dictText = haxe.Resource.getString("dictionary");
 		if (!isSerialized) dictWords = dictText.split("\r\n");
