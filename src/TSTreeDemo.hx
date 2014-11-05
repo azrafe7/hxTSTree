@@ -157,7 +157,7 @@ class TSTreeDemo extends Sprite {
 			//trace(tree.getBalancedIndices(dictWords));
 		} else {
 			tree = TSTree.unserialize(dictText);
-			trace("from serialized");
+			trace("\nfrom serialized");
 		}
 		var insertTime = stopWatch();
 		dictInfo.text = 'Dictionary: ${tree.numKeys} words loaded in ${loadTime}s, inserted in ${insertTime}s (${tree.numNodes} nodes)';

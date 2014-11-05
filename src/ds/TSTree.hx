@@ -508,7 +508,7 @@ class TSTree<T>
 	 * 
 	 * Note that it won't be ensured that `key` is already present in the tree.
 	 * 
-	 * TODO: improve this with a custom traversal instead of getAllKeysFrom()
+	 * TODO: improve this (it's still a bit slow if used as iterator)
 	 */ 
 	public function prevOf(key:String):String
 	{
@@ -517,36 +517,35 @@ class TSTree<T>
 		if (key == null || key.length < 1) return result;
 		var path = getPathTo(root, key);
 		
-		var tempMaxResults = maxResults;
 		while (path.length > 0) {
 			var node = path.pop();
 			
-			// check eqKid's keys
-			maxResults = MAX_INT;
+			// check eqKid's first key (in reversed order)
+			maxResults = 1;
 			var results = [];
-			getAllKeysFrom(node.eqKid, results);
-			if (results.length > 0 && results[results.length - 1] < key) {
-				result = results[results.length - 1];
+			getAllKeysFrom(node.eqKid, results, true);
+			if (results.length > 0 && results[0] < key) {
+				result = results[0];
 				break;
 			}
 			
 			// check curr node key
+			examinedNodes++;
 			if (node.isKey && node.key < key) {
 				result = node.key;
 				break;
-			}
+			}			
 			
-			// check loKid's keys
-			maxResults = MAX_INT;
-			var results = [];
-			getAllKeysFrom(node.loKid, results);
-			if (results.length > 0 && results[results.length - 1] < key) {
-				result = results[results.length - 1];
+			// check loKid's first key (in reversed order)
+			maxResults = 1;
+			results = [];
+			getAllKeysFrom(node.loKid, results, true);
+			if (results.length > 0 && results[0] < key) {
+				result = results[0];
 				break;
 			}
 		}
 		
-		maxResults = tempMaxResults;
 		return result;
 	}
 	
@@ -562,11 +561,11 @@ class TSTree<T>
 		if (key == null) return result;
 		var path = getPathTo(root, key);
 		
-		var tempMaxResults = maxResults;
 		while (path.length > 0) {
 			var node = path.pop();
 			
 			// check curr node key
+			examinedNodes++;
 			if (node.isKey && node.key > key) {
 				result = node.key;
 				break;
@@ -583,7 +582,7 @@ class TSTree<T>
 			
 			// check hiKid's first key
 			maxResults = 1;
-			var results = [];
+			results = [];
 			getAllKeysFrom(node.hiKid, results);
 			if (results.length > 0 && results[0] > key) {
 				result = results[0];
@@ -591,7 +590,6 @@ class TSTree<T>
 			}
 		}
 		
-		maxResults = tempMaxResults;
 		return result;
 	}
 	
@@ -739,24 +737,44 @@ class TSTree<T>
 		return result;
 	}
 	
-	/** Returns all keys belonging to this `node` (including it i it's a key node). */
-	function getAllKeysFrom(node:Node<T>, results:Array<String>):Array<String>
+	/** 
+	 * Returns all keys belonging to this `node` (including it if it's a key node). 
+	 * 
+	 * @param reverse	if set to `true` the tree will be traversed in reversed in-order fashion.
+	 */
+	function getAllKeysFrom(node:Node<T>, results:Array<String>, reverse:Bool = false):Array<String>
 	{
 		if (node == null || maxResults <= 0) return results;
 		
 		examinedNodes++;
-		if (node.loKid != null) {
-			getAllKeysFrom(node.loKid, results);
-		}
-		if (node.isKey) {
-			if (maxResults > 0) results.push(node.key);
-			maxResults--;
-		}
-		if (node.eqKid != null) {
-			getAllKeysFrom(node.eqKid, results);
-		}
-		if (node.hiKid != null) {
-			getAllKeysFrom(node.hiKid, results);
+		if (!reverse) {
+			if (node.loKid != null) {
+				getAllKeysFrom(node.loKid, results, reverse);
+			}
+			if (node.isKey) {
+				if (maxResults > 0) results.push(node.key);
+				maxResults--;
+			}
+			if (node.eqKid != null) {
+				getAllKeysFrom(node.eqKid, results, reverse);
+			}
+			if (node.hiKid != null) {
+				getAllKeysFrom(node.hiKid, results, reverse);
+			}
+		} else {
+			if (node.hiKid != null) {
+				getAllKeysFrom(node.hiKid, results, reverse);
+			}
+			if (node.eqKid != null) {
+				getAllKeysFrom(node.eqKid, results, reverse);
+			}
+			if (node.isKey) {
+				if (maxResults > 0) results.push(node.key);
+				maxResults--;
+			}
+			if (node.loKid != null) {
+				getAllKeysFrom(node.loKid, results, reverse);
+			}
 		}
 		
 		return results;
