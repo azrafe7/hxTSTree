@@ -530,7 +530,6 @@ class TSTree<T>
 			}
 			
 			// check curr node key
-			examinedNodes++;
 			if (node.isKey && node.key < key) {
 				result = node.key;
 				break;
@@ -565,7 +564,6 @@ class TSTree<T>
 			var node = path.pop();
 			
 			// check curr node key
-			examinedNodes++;
 			if (node.isKey && node.key > key) {
 				result = node.key;
 				break;
