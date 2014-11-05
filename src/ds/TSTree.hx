@@ -240,7 +240,9 @@ class TSTree<T>
 	/**
 	 * Searches the tree for keys matching the given `pattern`.
 	 * 
-	 * i.e. a pattern of ".a.a.a" will match "banana", "pajama", etc.
+	 * (i.e. a pattern of ".a.a.a" will match "banana", "pajama", etc.)
+	 * 
+	 * @see #ANY_CHAR
 	 * 
 	 * @param	results		Matching keys will be appended to this array.
 	 * @param	maxResults	Max number of results allowed.
@@ -505,6 +507,8 @@ class TSTree<T>
 	 * Finds the the predecessor of `key` (or null if it doesn't exist).
 	 * 
 	 * Note that it won't be ensured that `key` is already present in the tree.
+	 * 
+	 * TODO: improve this with a custom traversal instead of getAllKeysFrom()
 	 */ 
 	public function prevOf(key:String):String
 	{
@@ -516,22 +520,25 @@ class TSTree<T>
 		var tempMaxResults = maxResults;
 		while (path.length > 0) {
 			var node = path.pop();
+			
+			// check eqKid's keys
 			maxResults = MAX_INT;
 			var results = [];
-			// check eqKid's keys
 			getAllKeysFrom(node.eqKid, results);
 			if (results.length > 0 && results[results.length - 1] < key) {
 				result = results[results.length - 1];
 				break;
 			}
+			
 			// check curr node key
 			if (node.isKey && node.key < key) {
 				result = node.key;
 				break;
 			}
+			
+			// check loKid's keys
 			maxResults = MAX_INT;
 			var results = [];
-			// check loKid's keys
 			getAllKeysFrom(node.loKid, results);
 			if (results.length > 0 && results[results.length - 1] < key) {
 				result = results[results.length - 1];
@@ -558,22 +565,25 @@ class TSTree<T>
 		var tempMaxResults = maxResults;
 		while (path.length > 0) {
 			var node = path.pop();
+			
 			// check curr node key
 			if (node.isKey && node.key > key) {
 				result = node.key;
 				break;
 			}
+			
+			// check eqKid's first key
 			maxResults = 1;
 			var results = [];
-			// check eqKid's first key
 			getAllKeysFrom(node.eqKid, results);
 			if (results.length > 0 && results[0] > key) {
 				result = results[0];
 				break;
 			}
+			
+			// check hiKid's first key
 			maxResults = 1;
 			var results = [];
-			// check hiKid's first key
 			getAllKeysFrom(node.hiKid, results);
 			if (results.length > 0 && results[0] > key) {
 				result = results[0];
@@ -585,7 +595,7 @@ class TSTree<T>
 		return result;
 	}
 	
-	/** In-order tree traversal (callback will be called on every encountered node). */
+	/** In-order tree traversal (`callback` will be called for every encountered node). */
 	function traverse(node:Node<T>, callback:Node<T>->Void):Void 
 	{
 		if (node == null) return;
@@ -596,12 +606,14 @@ class TSTree<T>
 		traverse(node.hiKid, callback);
 	}
 	
+	/** Creates a new Node (and increments `numNodes`). */
 	inline function createNode(char:String):Node<T>
 	{
 		numNodes++;
 		return new Node(char);
 	}
 	
+	/** Recursive version of `_insert()` (not used anymore, but left here for historical reasons). */ 
 	function _recurInsert(node:Node<T>, key:String, data:T, idx:Int = 0):Node<T>
 	{
 		if (node == null) {
@@ -630,6 +642,7 @@ class TSTree<T>
 		return node;
 	}
 	
+	/** Iterative insert. */
 	function _insert(key:String, data:T):Void
 	{
 		if (key == null || key.length < 1) return; // don't insert empty or null key
@@ -666,6 +679,7 @@ class TSTree<T>
 		}
 	}
 	
+	/** Searches for a node with key equal to `key`, starting at `node` (`callback` will be called for every encountered node). */
 	function getNodeFor(node:Node<T>, key:String, callback:Node<T>->Void = null):Node<T>
 	{
 		var idx:Int = 0;
@@ -694,35 +708,7 @@ class TSTree<T>
 		return null;
 	}
 	
-	function _prefixSearch(node:Node<T>, prefix:String, results:Array<String>, idx:Int = 0):Array<String>
-	{
-		var len = prefix.length;
-		while (node != null && maxResults > 0) {
-			examinedNodes++;
-			var splitChar = node.splitChar;
-			var char = prefix.charAt(idx);
-			
-			if (char < splitChar) {
-				node = node.loKid;
-			} else if (char == splitChar) {
-				if (idx == len - 1) {
-					if (node.isKey && maxResults > 0) {
-						results.push(node.key);
-						maxResults--;
-					}
-					getAllKeysFrom(node.eqKid, results);
-					break;
-				}
-				node = node.eqKid;
-				idx++;
-			} else {
-				node = node.hiKid;
-			}
-		}
-		
-		return results;
-	}
-	
+	/** Finds the node path from `startNode` to the node where `key` should be inserted. */
 	function getPathTo(startNode:Node<T>, key:String):Array<Node<T>>
 	{
 		var result = [];
@@ -753,10 +739,11 @@ class TSTree<T>
 		return result;
 	}
 	
+	/** Returns all keys belonging to this `node` (including it i it's a key node). */
 	function getAllKeysFrom(node:Node<T>, results:Array<String>):Array<String>
 	{
 		if (node == null || maxResults <= 0) return results;
-
+		
 		examinedNodes++;
 		if (node.loKid != null) {
 			getAllKeysFrom(node.loKid, results);
@@ -770,6 +757,35 @@ class TSTree<T>
 		}
 		if (node.hiKid != null) {
 			getAllKeysFrom(node.hiKid, results);
+		}
+		
+		return results;
+	}
+	
+	function _prefixSearch(node:Node<T>, prefix:String, results:Array<String>, idx:Int = 0):Array<String>
+	{
+		var len = prefix.length;
+		while (node != null && maxResults > 0) {
+			examinedNodes++;
+			var splitChar = node.splitChar;
+			var char = prefix.charAt(idx);
+			
+			if (char < splitChar) {
+				node = node.loKid;
+			} else if (char == splitChar) {
+				if (idx == len - 1) {
+					if (node.isKey && maxResults > 0) {
+						results.push(node.key);
+						maxResults--;
+					}
+					getAllKeysFrom(node.eqKid, results);
+					break;
+				}
+				node = node.eqKid;
+				idx++;
+			} else {
+				node = node.hiKid;
+			}
 		}
 		
 		return results;
