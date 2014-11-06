@@ -468,7 +468,9 @@ class TSTree<T>
 		
 		// serialize keyValuePairs in sequence order
 		for (i in 0...sequence.length) {
-			serializer.serialize(keyDataPairs[sequence[i]]);
+			var pair = keyDataPairs[sequence[i]];
+			serializer.serialize(pair.key);
+			serializer.serialize(pair.data);
 		}
 		
 		return serializer.toString();
@@ -488,8 +490,9 @@ class TSTree<T>
 		var numKeys = unserializer.unserialize();
 		
 		for (i in 0...numKeys) {
-			var pair = unserializer.unserialize();
-			tree._insert(pair.key, pair.data);
+			var key = unserializer.unserialize();
+			var data = unserializer.unserialize();
+			tree._insert(key, data);
 		}
 		
 		return tree;
